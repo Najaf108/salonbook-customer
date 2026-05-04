@@ -69,6 +69,13 @@ export default function AppLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="(chat)"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
     </Tabs>
   );
 }

@@ -17,8 +17,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function EditProfileScreen() {
     const { user, updateUser } = useAuthStore();
     const [name, setName] = useState(user?.name || '');
+    const [age, setAge] = useState(user?.age?.toString() || '');
     const [gender, setGender] = useState(user?.gender || null);
+    const [phone, setPhone] = useState(user?.phone || '');
     const [isNameFocused, setIsNameFocused] = useState(false);
+    const [isPhoneFocused, setIsPhoneFocused] = useState(false);
+    const [isAgeFocused, setIsAgeFocused] = useState(false);
     const [uploading, setUploading] = useState(false);
 
     const handlePickImage = async () => {
@@ -62,7 +66,20 @@ export default function EditProfileScreen() {
     };
 
     const { mutateAsync, isPending } = useMutation({
-        mutationFn: () => authService.updateProfile({ name, gender }),
+        mutationFn: () => {
+            const updateData = {
+                name: name.trim(),
+                gender,
+                phone: phone.trim()
+            };
+            const parsedAge = parseInt(age);
+            if (!isNaN(parsedAge)) {
+                updateData.age = parsedAge;
+            } else {
+                updateData.age = null;
+            }
+            return authService.updateProfile(updateData);
+        },
         onSuccess: (data) => {
             updateUser(data);
             Alert.alert('Saved!', 'Your profile has been updated.', [
@@ -120,12 +137,28 @@ export default function EditProfileScreen() {
 
                         <View style={styles.formCard}>
                             <View style={styles.fieldBlock}>
-                                <Text style={styles.fieldLabel}>Mobile Number</Text>
-                                <View style={styles.disabledInput}>
-                                    <MaterialIcons name="phone" size={20} color="#797174" />
-                                    <Text style={styles.disabledText}>{user?.phone}</Text>
+                                <Text style={styles.fieldLabel}>WhatsApp Number</Text>
+                                <View style={[styles.inputWrapper, isPhoneFocused && styles.inputWrapperFocused]}>
+                                    {isPhoneFocused && <View style={styles.inputHighlight} />}
+                                    <MaterialIcons
+                                        name="phone"
+                                        size={20}
+                                        color={isPhoneFocused ? '#963b52' : '#797174'}
+                                        style={{ marginLeft: 16 }}
+                                    />
+                                    <TextInput
+                                        style={styles.input}
+                                        value={phone}
+                                        onChangeText={setPhone}
+                                        placeholder="03XX XXXXXXX"
+                                        placeholderTextColor="rgba(84, 66, 69, 0.5)"
+                                        keyboardType="phone-pad"
+                                        maxLength={11}
+                                        onFocus={() => setIsPhoneFocused(true)}
+                                        onBlur={() => setIsPhoneFocused(false)}
+                                    />
                                 </View>
-                                <Text style={styles.helperText}>Phone numbers cannot be changed directly.</Text>
+                                <Text style={styles.helperText}>Used for booking updates and communication.</Text>
                             </View>
 
                             <View style={styles.divider} />
@@ -143,6 +176,27 @@ export default function EditProfileScreen() {
                                         placeholderTextColor="rgba(84, 66, 69, 0.5)"
                                         onFocus={() => setIsNameFocused(true)}
                                         onBlur={() => setIsNameFocused(false)}
+                                    />
+                                </View>
+                            </View>
+
+                            <View style={styles.divider} />
+
+                            <View style={styles.fieldBlock}>
+                                <Text style={styles.fieldLabel}>Age</Text>
+                                <View style={[styles.inputWrapper, isAgeFocused && styles.inputWrapperFocused]}>
+                                    {isAgeFocused && <View style={styles.inputHighlight} />}
+                                    <MaterialIcons name="cake" size={20} color={isAgeFocused ? '#963b52' : '#797174'} style={{ marginLeft: 16 }} />
+                                    <TextInput
+                                        style={styles.input}
+                                        value={age}
+                                        onChangeText={setAge}
+                                        placeholder="Your Age"
+                                        placeholderTextColor="rgba(84, 66, 69, 0.5)"
+                                        keyboardType="number-pad"
+                                        maxLength={3}
+                                        onFocus={() => setIsAgeFocused(true)}
+                                        onBlur={() => setIsAgeFocused(false)}
                                     />
                                 </View>
                             </View>
@@ -216,7 +270,7 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 2,
     },
-    appTitle: { fontSize: 20, fontWeight: 'bold', color: '#963b52', letterSpacing: -0.5 },
+    appTitle: { fontSize: 24, fontWeight: 'bold', color: '#963b52', letterSpacing: -0.5 },
     scrollContent: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 160 },
     profileHeader: { alignItems: 'center', marginBottom: 32 },
     avatarWrap: {
@@ -243,7 +297,7 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: '#fff7f9',
     },
-    headerTitle: { fontSize: 24, fontWeight: '900', color: '#221920', letterSpacing: -0.5, marginBottom: 4 },
+    headerTitle: { fontSize: 28, fontWeight: '900', color: '#221920', letterSpacing: -0.5, marginBottom: 4 },
     headerSub: { fontSize: 14, color: '#544245' },
     formCard: {
         backgroundColor: '#ffffff',
@@ -256,7 +310,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     fieldBlock: { marginBottom: 8 },
-    fieldLabel: { fontSize: 13, fontWeight: 'bold', color: '#221920', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 },
+    fieldLabel: { fontSize: 14, fontWeight: 'bold', color: '#221920', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
     disabledInput: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -289,9 +343,9 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        paddingVertical: 16,
+        paddingVertical: 18,
         paddingHorizontal: 12,
-        fontSize: 16,
+        fontSize: 18,
         color: '#221920',
         fontWeight: '500',
     },
@@ -329,5 +383,5 @@ const styles = StyleSheet.create({
         borderTopColor: 'rgba(255, 255, 255, 0.2)',
     },
     primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 18, borderRadius: 32, gap: 8, shadowColor: '#963b52', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 30, elevation: 8 },
-    primaryBtnText: { fontSize: 16, fontWeight: 'bold', color: '#ffffff', letterSpacing: 0.5 },
+    primaryBtnText: { fontSize: 18, fontWeight: 'bold', color: '#ffffff', letterSpacing: 0.5 },
 });

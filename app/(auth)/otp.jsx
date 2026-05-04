@@ -9,14 +9,20 @@ import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/useAuthStore';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { signInWithPhoneNumber } from 'firebase/auth';
+import { auth, firebaseConfig } from '@/lib/firebase';
 
 export default function OTPScreen() {
     const { phone, name } = useLocalSearchParams();
-    const [otp, setOtp] = useState(['', '', '', '']);
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [resendTimer, setResendTimer] = useState(30);
     const setAuth = useAuthStore(s => s.setAuth);
+    const authResult = useAuthStore(s => s.authResult);
+    const setAuthResult = useAuthStore(s => s.setAuthResult);
     const inputs = useRef([]);
+    const recaptchaVerifier = useRef(null);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -30,7 +36,7 @@ export default function OTPScreen() {
         const newOtp = [...otp];
         newOtp[idx] = val;
         setOtp(newOtp);
-        if (val && idx < 3) inputs.current[idx + 1]?.focus();
+        if (val && idx < 5) inputs.current[idx + 1]?.focus();
         if (!val && idx > 0) inputs.current[idx - 1]?.focus();
         if (newOtp.every(d => d) && val) {
             verifyOtp(newOtp.join(''));
@@ -38,28 +44,57 @@ export default function OTPScreen() {
     };
 
     const verifyOtp = async (code) => {
+        /* OTP Verification commented out as per request
         setLoading(true);
         try {
-            const userName = Array.isArray(name) ? name[0] : name;
-            const { user, token } = await authService.verifyOTP(phone, code, userName);
+            if (!authResult) {
+                Alert.alert('Session Expired', 'Please go back and enter your phone number again.');
+                return;
+            }
+            const credential = await authResult.confirm(code);
+            const idToken = await credential.user.getIdToken();
+
+            const { user, token, isNewUser } = await authService.loginWithFirebase(idToken);
             setAuth(user, token);
-            router.replace('/(app)/(home)');
+
+            if (isNewUser) {
+                router.replace('/(auth)/details');
+            } else {
+                router.replace('/(app)/(home)');
+            }
         } catch (err) {
+            console.error('OTP Verification Error:', err);
             Alert.alert('Invalid OTP', 'The code you entered is incorrect. Please try again.');
-            setOtp(['', '', '', '']);
+            setOtp(['', '', '', '', '', '']);
             inputs.current[0]?.focus();
         } finally {
             setLoading(false);
         }
+        */
     };
 
     const handleResend = async () => {
         if (resendTimer > 0) return;
         try {
-            await authService.requestOTP(phone);
+            const formatted = phone.replace(/^0/, '+92');
+
+            // DEVELOPMENT BYPASS
+            if (phone.includes('3000000000')) {
+                setResendTimer(30);
+                Alert.alert('OTP Sent', 'Mock OTP (123456) sent for testing.');
+                return;
+            }
+
+            const confirmation = await signInWithPhoneNumber(
+                auth,
+                formatted,
+                recaptchaVerifier.current
+            );
+            setAuthResult(confirmation);
             setResendTimer(30);
             Alert.alert('OTP Sent', 'A new code has been sent to your number.');
-        } catch {
+        } catch (err) {
+            console.error('JS Resend Error:', err);
             Alert.alert('Error', 'Could not resend OTP. Try again.');
         }
     };
@@ -67,6 +102,11 @@ export default function OTPScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
+            <FirebaseRecaptchaVerifierModal
+                ref={recaptchaVerifier}
+                firebaseConfig={firebaseConfig}
+                attemptInvisibleVerification={true}
+            />
             <KeyboardAvoidingView
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -86,13 +126,13 @@ export default function OTPScreen() {
                     </View>
 
                     <View style={styles.content}>
-                        <Text style={styles.title}>Enter OTP Code</Text>
+                        <Text style={styles.title}>OTP Verification</Text>
                         <Text style={styles.subtitle}>
-                            Please enter the 4-digit code sent to{'\n'}
-                            <Text style={styles.phoneHighlight}>{phone}</Text>
+                            OTP functionality has been disabled.{'\n'}
+                            <Text style={styles.phoneHighlight}>Please use Google Sign-in to continue.</Text>
                         </Text>
 
-                        {/* OTP Input Grid */}
+                        {/* OTP Input Grid Commented Out
                         <View style={styles.otpRow}>
                             {otp.map((digit, idx) => (
                                 <View key={idx} style={styles.digitBox}>
@@ -118,7 +158,6 @@ export default function OTPScreen() {
                             </View>
                         )}
 
-                        {/* Resend Action */}
                         <View style={styles.resendContainer}>
                             <Text style={styles.resendLabel}>Didn't receive the code?</Text>
                             <TouchableOpacity
@@ -131,6 +170,7 @@ export default function OTPScreen() {
                                 </Text>
                             </TouchableOpacity>
                         </View>
+                        */}
                     </View>
 
                     {/* Decorative Element */}
@@ -175,7 +215,7 @@ const styles = StyleSheet.create({
     subtitle: { fontSize: 15, color: '#544245', lineHeight: 24, marginBottom: 48, opacity: 0.8 },
     phoneHighlight: { fontWeight: 'bold', color: '#963b52' },
     otpRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
-    digitBox: { width: '22%', height: 72, position: 'relative' },
+    digitBox: { width: '14%', height: 72, position: 'relative' },
     otpInput: {
         width: '100%', height: '100%',
         backgroundColor: '#ffffff',

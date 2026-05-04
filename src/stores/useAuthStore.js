@@ -8,6 +8,21 @@ export const useAuthStore = create((set, get) => ({
   token: null,
   isLoading: true,
   isAuthenticated: false,
+  authResult: null,
+
+  setAuthResult: (res) => set({ authResult: res }),
+
+  login: async (idToken, name, role) => {
+    set({ isLoading: true });
+    try {
+      const res = await authService.loginWithToken(idToken, name, role);
+      set({ user: res.user, token: res.token, isAuthenticated: true, isLoading: false });
+      return res;
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
 
   // Called on app start to restore session
   init: async () => {

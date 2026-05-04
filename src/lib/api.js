@@ -5,7 +5,7 @@ import storage from './storage';
 // Replace with your laptop's local IP when testing on phone
 // Run "ipconfig" (Windows) or "ifconfig" (Mac) to find it
 const BASE_URL = __DEV__
-  ? 'http://192.168.43.14:3000/api'   // ← Added port :3000
+  ? 'http://192.168.43.14:3000/api'
   : 'https://your-production-api.com/api';
 
 export const api = axios.create({

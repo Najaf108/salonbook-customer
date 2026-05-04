@@ -24,7 +24,7 @@ export default function BookingDetailScreen() {
     if (!booking) return null;
 
     const status = BOOKING_STATUS_LABELS[booking.status] || { bg: '#efdee8', color: '#544245', label: 'Unknown' };
-    const canCancel = ['PENDING', 'CONFIRMED'].includes(booking.status);
+    const canCancel = booking.status === 'PENDING';
     const canReview = booking.status === 'COMPLETED' && !booking.review;
 
     const handleCancel = () => {
@@ -95,6 +95,12 @@ export default function BookingDetailScreen() {
                                 <Text style={styles.salonName}>{booking.salon?.name}</Text>
                                 <Text style={styles.salonAddr}>{booking.salon?.address}, {booking.salon?.city}</Text>
                             </View>
+                            <TouchableOpacity
+                                style={styles.headerChatBtn}
+                                onPress={() => router.push(`/(app)/(chat)/${booking.id}`)}
+                            >
+                                <MaterialIcons name="chat" size={24} color="#963b52" />
+                            </TouchableOpacity>
                         </View>
 
                         <View style={styles.divider} />
@@ -384,4 +390,13 @@ const styles = StyleSheet.create({
     directionsBtnText: { fontSize: 12, fontWeight: 'bold', color: '#963b52' },
     mapCard: { height: 200, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#efdee8' },
     map: { flex: 1 },
+    headerChatBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#fff7f9',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 2,
+    },
 });

@@ -69,7 +69,7 @@ export default function ProfileScreen() {
                     <View style={[styles.menuIconBox, isPrimaryIcon ? styles.bgPrimaryFixed : styles.bgSurfaceContainer]}>
                         <MaterialIcons
                             name={icon}
-                            size={20}
+                            size={24}
                             color={isPrimaryIcon ? '#7d283f' : '#221920'}
                         />
                     </View>
@@ -194,7 +194,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff7f9',
-        alignItems: 'center',
     },
     appBar: {
         flexDirection: 'row',
@@ -219,14 +218,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 16,
         paddingBottom: 40,
-        width: '100%',
-        maxWidth: 512,
     },
     pageTitle: {
-        fontSize: 32,
-        fontWeight: '800',
+        fontSize: 36,
+        fontWeight: '900',
         color: '#221920',
-        letterSpacing: -0.5,
+        letterSpacing: -1,
         marginBottom: 32,
     },
     profileSection: {
@@ -267,7 +264,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     userName: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
         color: '#221920',
         marginBottom: 8,
@@ -287,7 +284,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 8,
+        paddingVertical: 12,
         paddingHorizontal: 8,
         borderRadius: 8,
     },
@@ -297,9 +294,9 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     menuIconBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 8,
+        width: 48,
+        height: 48,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -310,7 +307,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fbe9f3',
     },
     menuLabel: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         color: '#221920',
     },
@@ -320,10 +317,9 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     divider: {
-        height: 8,
-        backgroundColor: 'rgba(239, 222, 232, 0.5)',
-        borderRadius: 4,
-        marginHorizontal: 16,
+        height: 1,
+        backgroundColor: '#efdee8',
+        marginHorizontal: 0,
         marginVertical: 4,
     },
     logoutBtn: {

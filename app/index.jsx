@@ -1,18 +1,37 @@
 // app/index.jsx  — Splash / redirect
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { COLORS } from '@/constants/theme';
+import storage from '@/lib/storage';
 
 export default function SplashScreen() {
     const { isLoading, isAuthenticated } = useAuthStore();
+    const [onboardingChecked, setOnboardingChecked] = useState(false);
+    const [onboardingDone, setOnboardingDone] = useState(false);
 
+    // Check onboarding flag from storage
     useEffect(() => {
-        if (!isLoading) {
-            router.replace(isAuthenticated ? '/(app)/(home)' : '/(auth)/phone');
+        (async () => {
+            const done = await storage.get('onboarding_done');
+            setOnboardingDone(!!done);
+            setOnboardingChecked(true);
+        })();
+    }, []);
+
+    // Redirect once both auth and onboarding checks are complete
+    useEffect(() => {
+        if (!isLoading && onboardingChecked) {
+            if (!onboardingDone) {
+                // First-time user → show onboarding
+                router.replace('/onboarding');
+            } else {
+                // Returning user → normal auth flow
+                router.replace(isAuthenticated ? '/(app)/(home)' : '/(auth)/phone');
+            }
         }
-    }, [isLoading, isAuthenticated]);
+    }, [isLoading, isAuthenticated, onboardingChecked, onboardingDone]);
 
     return (
         <View style={styles.container}>

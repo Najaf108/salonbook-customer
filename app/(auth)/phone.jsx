@@ -1,37 +1,106 @@
 // app/(auth)/phone.jsx
 import { useState } from 'react';
-import {
-    View, Text, TextInput, TouchableOpacity,
-    StyleSheet, KeyboardAvoidingView, Platform, Alert, SafeAreaView, StatusBar
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, SafeAreaView, StatusBar } from 'react-native';
 import { router } from 'expo-router';
-import { authService } from '@/services/auth.service';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
-export default function PhoneScreen() {
-    const [phone, setPhone] = useState('');
-    const [name, setName] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [isFocused, setIsFocused] = useState(null); // 'phone' or 'name'
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
-    const handleSendOTP = async () => {
-        if (!name.trim()) {
-            Alert.alert('Missing Name', 'Please enter your name to continue.');
-            return;
-        }
-        const cleaned = phone.replace(/\s/g, '');
-        if (!/^03\d{9}$/.test(cleaned)) {
-            Alert.alert('Invalid Number', 'Please enter a valid Pakistani mobile number starting with 03');
+WebBrowser.maybeCompleteAuthSession();
+
+// ─── Web client ID from google-services.json (client_type: 3) ─────────────────
+const WEB_CLIENT_ID = '70172727359-ddn3ibthvl39usbo6hshc0l30361e865.apps.googleusercontent.com';
+
+// ─── Expo proxy redirect URI — must be registered in Google Cloud Console ─────
+// owner=najaf108, slug=salonbook (from app.json)
+const REDIRECT_URI = 'https://auth.expo.io/@najaf108/salonbook';
+
+const GOOGLE_DISCOVERY = {
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint: 'https://oauth2.googleapis.com/token',
+    revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+};
+
+export default function PhoneScreen() {
+    const [loading, setLoading] = useState(false);
+    const login = useAuthStore(s => s.login);
+
+    // ── Authorization Code + PKCE flow ────────────────────────────────────────
+    // Google deprecated response_type=id_token (implicit flow).
+    // Code + PKCE is the modern, secure replacement — no client secret needed.
+    const [request, response, promptAsync] = AuthSession.useAuthRequest(
+        {
+            clientId: WEB_CLIENT_ID,
+            redirectUri: REDIRECT_URI,
+            scopes: ['openid', 'profile', 'email'],
+            responseType: AuthSession.ResponseType.Code,   // code flow, NOT id_token
+            usePKCE: true,                                 // PKCE — no client secret needed
+        },
+        GOOGLE_DISCOVERY
+    );
+
+    const handleGoogleSignIn = async () => {
+        if (!request) {
+            Alert.alert('Not Ready', 'Auth is loading, please try again.');
             return;
         }
         setLoading(true);
         try {
-            await authService.requestOTP(cleaned);
-            router.push({ pathname: '/(auth)/otp', params: { phone: cleaned, name: name.trim() } });
+            // Step 1 — Open Google consent screen via Expo proxy
+            const authResult = await promptAsync({ useProxy: true });
+
+            if (authResult?.type !== 'success') {
+                if (authResult?.type === 'error') {
+                    console.error('OAuth error:', authResult.error);
+                    Alert.alert('Sign-In Error', authResult.error?.message || 'Google Sign-In failed.');
+                }
+                setLoading(false);
+                return;
+            }
+
+            // Step 2 — Exchange authorization code for tokens (PKCE, no secret needed)
+            const tokenResponse = await AuthSession.exchangeCodeAsync(
+                {
+                    clientId: WEB_CLIENT_ID,
+                    redirectUri: REDIRECT_URI,
+                    code: authResult.params.code,
+                    extraParams: {
+                        code_verifier: request.codeVerifier,
+                    },
+                },
+                GOOGLE_DISCOVERY
+            );
+
+            // Step 3 — Extract id_token from token response
+            const id_token = tokenResponse.idToken;
+            if (!id_token) {
+                Alert.alert('Error', 'No ID token in token response.');
+                setLoading(false);
+                return;
+            }
+
+            // Step 4 — Sign in to Firebase with Google credential
+            const credential = GoogleAuthProvider.credential(id_token);
+            const userCredential = await signInWithCredential(auth, credential);
+            const firebaseIdToken = await userCredential.user.getIdToken();
+
+            // Step 5 — Sync with our backend
+            const res = await login(firebaseIdToken, userCredential.user.displayName, 'CUSTOMER');
+
+            if (res.isNewUser) {
+                router.replace('/(auth)/details');
+            } else {
+                router.replace('/(app)/(home)');
+            }
+
         } catch (err) {
-            Alert.alert('Error', err.response?.data?.error || 'Could not send OTP. Try again.');
-        } finally {
+            console.error('Google Sign-In Error:', err);
+            Alert.alert('Error', err.message || 'Google Sign-In failed.');
             setLoading(false);
         }
     };
@@ -39,103 +108,79 @@ export default function PhoneScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
-            <KeyboardAvoidingView
-                style={styles.container}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            >
-                <View style={styles.inner}>
-                    {/* Artistic Header */}
-                    <View style={styles.header}>
-                        <View style={styles.logoBadge}>
-                            <LinearGradient
-                                colors={['#963b52', '#b5536a']}
-                                style={styles.logoGradient}
-                            >
-                                <MaterialIcons name="auto-fix-high" size={32} color="#fff" />
-                            </LinearGradient>
-                        </View>
-                        <Text style={styles.appName}>SalonBook</Text>
-                        <Text style={styles.tagline}>Elevate your style experience</Text>
-                    </View>
-
-                    {/* Authentication Section */}
-                    <View style={styles.authCard}>
-                        <Text style={styles.title}>Welcome Back</Text>
-                        <Text style={styles.subtitle}>Enter your mobile number to continue your beauty journey</Text>
-
-                        <View style={[styles.inputContainer, isFocused === 'name' && styles.inputContainerFocused]}>
-                            {isFocused === 'name' && <View style={styles.inputHighlight} />}
-                            <MaterialIcons name="person-outline" size={20} color="#963b52" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Your Full Name"
-                                placeholderTextColor="rgba(84, 66, 69, 0.4)"
-                                value={name}
-                                onChangeText={setName}
-                                onFocus={() => setIsFocused('name')}
-                                onBlur={() => setIsFocused(null)}
-                                autoFocus
-                            />
-                        </View>
-
-                        <View style={[styles.inputContainer, isFocused === 'phone' && styles.inputContainerFocused]}>
-                            {isFocused === 'phone' && <View style={styles.inputHighlight} />}
-                            <MaterialIcons name="phone-iphone" size={20} color="#963b52" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="03XX XXXXXXX"
-                                placeholderTextColor="rgba(84, 66, 69, 0.4)"
-                                keyboardType="phone-pad"
-                                value={phone}
-                                onChangeText={setPhone}
-                                maxLength={11}
-                                onFocus={() => setIsFocused('phone')}
-                                onBlur={() => setIsFocused(null)}
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.mainBtn, (!phone || !name || loading) && styles.btnDisabled]}
-                            onPress={handleSendOTP}
-                            disabled={!phone || !name || loading}
-                            activeOpacity={0.9}
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <View style={styles.logoBadge}>
+                        <LinearGradient
+                            colors={['#963b52', '#b5536a']}
+                            style={styles.logoGradient}
                         >
-                            <LinearGradient
-                                colors={(!phone || loading) ? ['#d1c4c9', '#d1c4c9'] : ['#963b52', '#b5536a']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.btnGradient}
-                            >
-                                <Text style={styles.btnText}>
-                                    {loading ? 'Sending Code...' : 'Get OTP Code'}
-                                </Text>
-                                {!loading && <MaterialIcons name="arrow-forward" size={20} color="#fff" />}
-                            </LinearGradient>
-                        </TouchableOpacity>
+                            <MaterialIcons name="content-cut" size={32} color="#fff" />
+                        </LinearGradient>
                     </View>
-
-                    {/* Footer Policy */}
-                    <View style={styles.footer}>
-                        <Text style={styles.termsText}>
-                            By continuing, you agree to our{' '}
-                            <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-                            <Text style={styles.termsLink}>Privacy Policy</Text>
-                        </Text>
-                    </View>
+                    <Text style={styles.appName}>SalonBook</Text>
+                    <Text style={styles.tagline}>Book your next look</Text>
                 </View>
-            </KeyboardAvoidingView>
+
+                <View style={styles.authCard}>
+                    <Text style={styles.welcomeText}>Welcome</Text>
+                    <Text style={styles.subtitle}>Sign in with email to browse and book the best salons in your city.</Text>
+
+                    {/* <TouchableOpacity
+                        style={styles.googleBtn}
+                        onPress={handleGoogleSignIn}
+                        disabled={loading || !request}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.googleIconContainer}>
+                            <MaterialIcons name="login" size={24} color="#963b52" />
+                        </View>
+                        <Text style={styles.googleBtnText}>
+                            {loading ? 'Processing...' : 'Continue with Google'}
+                        </Text>
+                    </TouchableOpacity> */}
+
+                    {/* <View style={styles.divider}>
+                        <View style={styles.dividerLine} />
+                        <Text style={styles.dividerText}>or</Text>
+                        <View style={styles.dividerLine} />
+                    </View> */}
+
+                    <TouchableOpacity
+                        style={styles.emailBtn}
+                        onPress={() => router.push('/login')}
+                    >
+                        <MaterialIcons name="email" size={20} color="#fff" />
+                        <Text style={styles.emailBtnText}>Sign in with Email</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.registerBtn}
+                        onPress={() => router.push('/register')}
+                    >
+                        <Text style={styles.registerText}>
+                            New to SalonBook? <Text style={styles.registerLink}>Create Account</Text>
+                        </Text>
+                    </TouchableOpacity>
+
+                    <Text style={styles.footerText}>
+                        By continuing, you agree to our{' '}
+                        <Text style={styles.footerLink}>Terms</Text> and{' '}
+                        <Text style={styles.footerLink}>Privacy Policy</Text>
+                    </Text>
+                </View>
+            </View>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#fff7f9' },
-    container: { flex: 1 },
-    inner: { flex: 1, paddingHorizontal: 32, justifyContent: 'center' },
+    container: { flex: 1, paddingHorizontal: 32, justifyContent: 'center' },
     header: { alignItems: 'center', marginBottom: 48 },
     logoBadge: {
-        width: 80, height: 80,
-        borderRadius: 24,
+        width: 64, height: 64,
+        borderRadius: 22,
         overflow: 'hidden',
         marginBottom: 16,
         shadowColor: '#963b52',
@@ -145,57 +190,54 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     logoGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    appName: { fontSize: 32, fontWeight: '900', color: '#221920', letterSpacing: -1 },
-    tagline: { fontSize: 14, color: '#544245', fontWeight: '500', opacity: 0.7 },
+    appName: { fontSize: 32, fontWeight: '900', color: '#221920', letterSpacing: -0.5 },
+    tagline: { fontSize: 14, color: '#544245', fontWeight: '500', opacity: 0.7, marginTop: 4 },
     authCard: {
         backgroundColor: '#ffffff',
         borderRadius: 32,
-        padding: 28,
+        padding: 24,
         shadowColor: '#1a1118',
         shadowOffset: { width: 0, height: 20 },
         shadowOpacity: 0.08,
         shadowRadius: 40,
         elevation: 10,
     },
-    title: { fontSize: 24, fontWeight: '800', color: '#221920', marginBottom: 8, letterSpacing: -0.5 },
-    subtitle: { fontSize: 14, color: '#544245', lineHeight: 22, marginBottom: 32, opacity: 0.8 },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#fbe9f3',
-        borderRadius: 18,
-        height: 64,
-        paddingHorizontal: 16,
-        position: 'relative',
-        overflow: 'hidden',
-        marginBottom: 24,
-    },
-    inputContainerFocused: {
-        backgroundColor: '#f5e3ee',
-    },
-    inputHighlight: {
-        position: 'absolute',
-        left: 0, top: 0, bottom: 0,
-        width: 4,
-        backgroundColor: '#963b52',
-    },
-    countryPicker: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    flag: { fontSize: 20 },
-    countryCode: { fontSize: 16, fontWeight: '700', color: '#221920' },
-    verticalDivider: { width: 1, height: 24, backgroundColor: 'rgba(150, 59, 82, 0.15)', marginHorizontal: 16 },
-    input: { flex: 1, fontSize: 18, color: '#221920', fontWeight: 'bold', paddingHorizontal: 12 },
-    inputIcon: { marginLeft: 4 },
-    mainBtn: { borderRadius: 32, height: 64, overflow: 'hidden' },
-    btnGradient: {
-        flex: 1,
+    welcomeText: { fontSize: 24, fontWeight: '800', color: '#221920', marginBottom: 8 },
+    subtitle: { fontSize: 14, color: '#544245', lineHeight: 20, marginBottom: 32, opacity: 0.8 },
+    googleBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        height: 56,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        borderColor: 'rgba(150, 59, 82, 0.1)',
+        backgroundColor: '#fff',
+        gap: 12,
     },
-    btnDisabled: { opacity: 0.6 },
-    btnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
-    footer: { marginTop: 40, paddingHorizontal: 20 },
-    termsText: { fontSize: 12, color: '#797174', textAlign: 'center', lineHeight: 20 },
-    termsLink: { color: '#963b52', fontWeight: 'bold', textDecorationLine: 'underline' },
+    googleIconContainer: { width: 24, height: 24, justifyContent: 'center', alignItems: 'center' },
+    googleBtnText: { fontSize: 16, fontWeight: '700', color: '#221920' },
+    divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+    dividerLine: { flex: 1, height: 1, backgroundColor: '#E5E7EB' },
+    dividerText: { marginHorizontal: 16, color: '#9CA3AF', fontWeight: '500' },
+    emailBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 56,
+        borderRadius: 18,
+        backgroundColor: '#963b52',
+        gap: 12,
+        shadowColor: '#963b52',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    emailBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+    registerBtn: { marginTop: 24, alignItems: 'center' },
+    registerText: { fontSize: 14, color: '#544245', opacity: 0.8 },
+    registerLink: { color: '#963b52', fontWeight: '700' },
+    footerText: { textAlign: 'center', fontSize: 12, color: '#544245', marginTop: 24, opacity: 0.6, lineHeight: 18 },
+    footerLink: { color: '#963b52', fontWeight: '700' },
 });
