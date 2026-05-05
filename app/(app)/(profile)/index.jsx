@@ -167,8 +167,8 @@ export default function ProfileScreen() {
                         <MenuItem
                             icon="payments"
                             label="Payment Methods"
-                            subLabel="EasyPaisa, JazzCash"
-                            onPress={() => {/* Navigate */ }}
+                            subLabel="EasyPaisa, JazzCash (Coming Soon)"
+                            onPress={() => Alert.alert('Coming Soon', 'Payment methods management will be available in a future update.')}
                         />
                     </View>
 

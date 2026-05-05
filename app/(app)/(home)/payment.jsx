@@ -1,5 +1,5 @@
 // app/(app)/(home)/payment.jsx
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useBookingStore } from '@/stores/useBookingStore';
 import { PAYMENT_METHODS } from '@/constants/categories';
@@ -16,26 +16,35 @@ export default function PaymentScreen() {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.list}>
-                {PAYMENT_METHODS.map(method => (
-                    <TouchableOpacity
-                        key={method.id}
-                        style={[styles.card, paymentMethod === method.id && styles.cardSelected]}
-                        onPress={() => handleSelect(method.id)}
-                    >
-                        <View style={styles.iconBox}>
-                            <Text style={{ fontSize: 24 }}>{method.id === 'CASH' ? '💵' : method.id === 'STRIPE' ? '💳' : '📱'}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.cardTitle}>{method.label}</Text>
-                            <Text style={styles.cardSub}>{method.id === 'CASH' ? 'Pay after your service' : 'Secure instant payment'}</Text>
-                        </View>
-                        <View style={[styles.radio, paymentMethod === method.id && styles.radioActive]}>
-                            {paymentMethod === method.id && <View style={styles.radioDot} />}
-                        </View>
-                    </TouchableOpacity>
-                ))}
+                {PAYMENT_METHODS.map(method => {
+                    const isComingSoon = method.id === 'JAZZCASH' || method.id === 'EASYPAISA';
+                    return (
+                        <TouchableOpacity
+                            key={method.id}
+                            style={[styles.card, paymentMethod === method.id && styles.cardSelected, isComingSoon && { opacity: 0.5 }]}
+                            onPress={() => {
+                                if (isComingSoon) {
+                                    Alert.alert('Coming Soon', `${method.label} will be available in a future update.`);
+                                    return;
+                                }
+                                handleSelect(method.id);
+                            }}
+                        >
+                            <View style={styles.iconBox}>
+                                <Text style={{ fontSize: 24 }}>{method.id === 'CASH' ? '💵' : method.id === 'STRIPE' ? '💳' : '📱'}</Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.cardTitle}>{method.label}</Text>
+                                <Text style={styles.cardSub}>{method.id === 'CASH' ? 'Pay after your service' : 'Secure instant payment'}</Text>
+                            </View>
+                            <View style={[styles.radio, paymentMethod === method.id && styles.radioActive]}>
+                                {paymentMethod === method.id && <View style={styles.radioDot} />}
+                            </View>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
-        </ScrollView>
+        </ScrollView >
     );
 }
 
