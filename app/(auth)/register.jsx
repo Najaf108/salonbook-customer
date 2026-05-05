@@ -8,10 +8,13 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
+import { authService } from '@/services/auth.service';
+
 export default function RegisterScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const login = useAuthStore(s => s.login);
 
     const handleRegister = async () => {
@@ -28,20 +31,17 @@ export default function RegisterScreen() {
         setLoading(true);
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-            // We'll update the name in the details screen
-            // await updateProfile(userCredential.user, { displayName: name });
-
             const idToken = await userCredential.user.getIdToken();
 
-            // Sync with backend (passing 'New User' as placeholder)
-            const res = await login(idToken, 'New User', 'CUSTOMER');
+            // 1. Request OTP from backend
+            await authService.requestOTP(email);
 
-            if (res.isNewUser) {
-                router.replace('/(auth)/details');
-            } else {
-                router.replace('/(app)/(home)');
-            }
+            // 2. Navigate to OTP verification
+            router.push({
+                pathname: '/(auth)/otp',
+                params: { email, idToken, role: 'CUSTOMER' }
+            });
+
         } catch (err) {
             console.error('Registration Error:', err);
             let message = 'Registration failed. Please try again.';
@@ -55,6 +55,7 @@ export default function RegisterScreen() {
             setLoading(false);
         }
     };
+
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -115,8 +116,18 @@ export default function RegisterScreen() {
                                     placeholderTextColor="#9CA3AF"
                                     value={password}
                                     onChangeText={setPassword}
-                                    secureTextEntry
+                                    secureTextEntry={!showPassword}
                                 />
+                                <TouchableOpacity
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    style={styles.eyeIcon}
+                                >
+                                    <MaterialIcons
+                                        name={showPassword ? "visibility" : "visibility-off"}
+                                        size={22}
+                                        color="#9CA3AF"
+                                    />
+                                </TouchableOpacity>
                             </View>
                         </View>
 
@@ -194,6 +205,7 @@ const styles = StyleSheet.create({
     },
     inputIcon: { marginRight: 12 },
     input: { flex: 1, color: '#111827', fontSize: 16, fontWeight: '500' },
+    eyeIcon: { padding: 8 },
     registerBtn: {
         backgroundColor: '#963b52',
         height: 56,

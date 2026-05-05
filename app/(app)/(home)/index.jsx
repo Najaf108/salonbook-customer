@@ -14,6 +14,7 @@ import { useFeaturedPackages } from '@/hooks/usePackages';
 import { useBookingStore } from '@/stores/useBookingStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { useUnreadMessageCount } from '@/hooks/useMessages';
 import Badge from '@/components/Badge';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import EmptyState from '@/components/EmptyState';
@@ -30,6 +31,7 @@ export default function HomeScreen() {
     const setSalon = useBookingStore(s => s.setSalon);
 
     const { data: unreadData } = useUnreadCount();
+    const { data: unreadMessagesData } = useUnreadMessageCount();
     const unreadCount = unreadData?.count || 0;
 
     const coords = location ? { lat: location.latitude, lng: location.longitude } : null;
@@ -80,6 +82,19 @@ export default function HomeScreen() {
                             {unreadCount > 0 && (
                                 <View style={styles.badgePos}>
                                     <Badge count={unreadCount} size="small" />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.bellBtn}
+                            onPress={() => router.push('/(app)/(chat)/list')}
+                            activeOpacity={0.7}
+                        >
+                            <MaterialIcons name="chat-bubble-outline" size={24} color="#221920" />
+                            {unreadMessagesData?.count > 0 && (
+                                <View style={styles.badgePos}>
+                                    <Badge count={unreadMessagesData.count} size="small" />
                                 </View>
                             )}
                         </TouchableOpacity>

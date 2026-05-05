@@ -28,7 +28,7 @@ export default function SplashScreen() {
                 router.replace('/onboarding');
             } else {
                 // Returning user → normal auth flow
-                router.replace(isAuthenticated ? '/(app)/(home)' : '/(auth)/phone');
+                router.replace(isAuthenticated ? '/(app)/(home)' : '/(auth)/login');
             }
         }
     }, [isLoading, isAuthenticated, onboardingChecked, onboardingDone]);

@@ -62,8 +62,12 @@ export default function ProfileScreen() {
         ]);
     };
 
-    const MenuItem = ({ icon, label, subLabel, onPress, isPrimaryIcon = true, badgeCount }) => (
-        <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+    const MenuItem = ({ icon, label, subLabel, onPress, isPrimaryIcon = true, badgeCount, disabled, isComingSoon }) => (
+        <TouchableOpacity
+            style={[styles.menuItem, disabled && { opacity: 0.5 }]}
+            onPress={disabled ? null : onPress}
+            activeOpacity={disabled ? 1 : 0.7}
+        >
             <View style={styles.menuItemLeft}>
                 {icon ? (
                     <View style={[styles.menuIconBox, isPrimaryIcon ? styles.bgPrimaryFixed : styles.bgSurfaceContainer]}>
@@ -74,19 +78,29 @@ export default function ProfileScreen() {
                         />
                     </View>
                 ) : null}
-                <View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <Text style={styles.menuLabel}>{label}</Text>
                         {badgeCount > 0 && (
                             <View style={styles.badge}>
                                 <Text style={styles.badgeText}>{badgeCount}</Text>
                             </View>
                         )}
+                        {isComingSoon && (
+                            <View style={styles.comingSoonBadge}>
+                                <MaterialIcons name="lock" size={10} color="#963b52" />
+                                <Text style={styles.comingSoonText}>COMING SOON</Text>
+                            </View>
+                        )}
                     </View>
                     {subLabel ? <Text style={styles.menuSubLabel}>{subLabel}</Text> : null}
                 </View>
             </View>
-            <MaterialIcons name="chevron-right" size={24} color="#544245" />
+            <MaterialIcons
+                name={isComingSoon ? "lock-outline" : "chevron-right"}
+                size={20}
+                color={isComingSoon ? "#963b52" : "#544245"}
+            />
         </TouchableOpacity>
     );
 
@@ -167,8 +181,10 @@ export default function ProfileScreen() {
                         <MenuItem
                             icon="payments"
                             label="Payment Methods"
-                            subLabel="EasyPaisa, JazzCash (Coming Soon)"
-                            onPress={() => Alert.alert('Coming Soon', 'Payment methods management will be available in a future update.')}
+                            subLabel="EasyPaisa, JazzCash"
+                            disabled
+                            isComingSoon
+                            onPress={() => { }}
                         />
                     </View>
 
@@ -292,6 +308,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 16,
+        flex: 1,
     },
     menuIconBox: {
         width: 48,
@@ -307,7 +324,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fbe9f3',
     },
     menuLabel: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#221920',
     },
@@ -353,5 +370,19 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 10,
         fontWeight: 'bold',
+    },
+    comingSoonBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#ffd9de',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+    },
+    comingSoonText: {
+        fontSize: 8,
+        fontWeight: '900',
+        color: '#963b52',
     },
 });

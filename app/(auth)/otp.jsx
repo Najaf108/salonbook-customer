@@ -9,20 +9,14 @@ import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/useAuthStore';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import { signInWithPhoneNumber } from 'firebase/auth';
-import { auth, firebaseConfig } from '@/lib/firebase';
 
 export default function OTPScreen() {
-    const { phone, name } = useLocalSearchParams();
+    const { email, idToken, role } = useLocalSearchParams();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [resendTimer, setResendTimer] = useState(30);
-    const setAuth = useAuthStore(s => s.setAuth);
-    const authResult = useAuthStore(s => s.authResult);
-    const setAuthResult = useAuthStore(s => s.setAuthResult);
+    const login = useAuthStore(s => s.login);
     const inputs = useRef([]);
-    const recaptchaVerifier = useRef(null);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -39,25 +33,16 @@ export default function OTPScreen() {
         if (val && idx < 5) inputs.current[idx + 1]?.focus();
         if (!val && idx > 0) inputs.current[idx - 1]?.focus();
         if (newOtp.every(d => d) && val) {
-            verifyOtp(newOtp.join(''));
+            handleVerify(newOtp.join(''));
         }
     };
 
-    const verifyOtp = async (code) => {
-        /* OTP Verification commented out as per request
+    const handleVerify = async (code) => {
         setLoading(true);
         try {
-            if (!authResult) {
-                Alert.alert('Session Expired', 'Please go back and enter your phone number again.');
-                return;
-            }
-            const credential = await authResult.confirm(code);
-            const idToken = await credential.user.getIdToken();
+            const res = await login(idToken, 'New User', role, code);
 
-            const { user, token, isNewUser } = await authService.loginWithFirebase(idToken);
-            setAuth(user, token);
-
-            if (isNewUser) {
+            if (res.isNewUser) {
                 router.replace('/(auth)/details');
             } else {
                 router.replace('/(app)/(home)');
@@ -70,31 +55,16 @@ export default function OTPScreen() {
         } finally {
             setLoading(false);
         }
-        */
     };
 
     const handleResend = async () => {
         if (resendTimer > 0) return;
         try {
-            const formatted = phone.replace(/^0/, '+92');
-
-            // DEVELOPMENT BYPASS
-            if (phone.includes('3000000000')) {
-                setResendTimer(30);
-                Alert.alert('OTP Sent', 'Mock OTP (123456) sent for testing.');
-                return;
-            }
-
-            const confirmation = await signInWithPhoneNumber(
-                auth,
-                formatted,
-                recaptchaVerifier.current
-            );
-            setAuthResult(confirmation);
+            await authService.requestOTP(email);
             setResendTimer(30);
-            Alert.alert('OTP Sent', 'A new code has been sent to your number.');
+            Alert.alert('OTP Sent', `A new code has been sent to ${email}.`);
         } catch (err) {
-            console.error('JS Resend Error:', err);
+            console.error('Resend Error:', err);
             Alert.alert('Error', 'Could not resend OTP. Try again.');
         }
     };
@@ -102,17 +72,11 @@ export default function OTPScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
-            <FirebaseRecaptchaVerifierModal
-                ref={recaptchaVerifier}
-                firebaseConfig={firebaseConfig}
-                attemptInvisibleVerification={true}
-            />
             <KeyboardAvoidingView
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <View style={styles.inner}>
-                    {/* Header with Back Button */}
                     <View style={styles.appBar}>
                         <TouchableOpacity
                             onPress={() => router.back()}
@@ -128,11 +92,10 @@ export default function OTPScreen() {
                     <View style={styles.content}>
                         <Text style={styles.title}>OTP Verification</Text>
                         <Text style={styles.subtitle}>
-                            OTP functionality has been disabled.{'\n'}
-                            <Text style={styles.phoneHighlight}>Please use Google Sign-in to continue.</Text>
+                            We've sent a 6-digit verification code to{'\n'}
+                            <Text style={styles.phoneHighlight}>{email}</Text>
                         </Text>
 
-                        {/* OTP Input Grid Commented Out
                         <View style={styles.otpRow}>
                             {otp.map((digit, idx) => (
                                 <View key={idx} style={styles.digitBox}>
@@ -170,10 +133,8 @@ export default function OTPScreen() {
                                 </Text>
                             </TouchableOpacity>
                         </View>
-                        */}
                     </View>
 
-                    {/* Decorative Element */}
                     <View style={styles.bottomDecor}>
                         <LinearGradient
                             colors={['transparent', 'rgba(150, 59, 82, 0.05)']}

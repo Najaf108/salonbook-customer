@@ -11,6 +11,14 @@ export function useConversation(bookingId) {
     });
 }
 
+export function useConversations() {
+    return useQuery({
+        queryKey: ['conversations'],
+        queryFn: messageService.getConversations,
+        refetchInterval: 30000,
+    });
+}
+
 export function useSendMessage() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -18,6 +26,15 @@ export function useSendMessage() {
             messageService.sendMessage(bookingId, content),
         onSuccess: (_, { bookingId }) => {
             queryClient.invalidateQueries({ queryKey: ['conversation', bookingId] });
+            queryClient.invalidateQueries({ queryKey: ['unread-message-count'] });
         }
+    });
+}
+
+export function useUnreadMessageCount() {
+    return useQuery({
+        queryKey: ['unread-message-count'],
+        queryFn: messageService.getUnreadCount,
+        refetchInterval: 10000, // Every 10 seconds
     });
 }

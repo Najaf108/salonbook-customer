@@ -12,10 +12,10 @@ export const useAuthStore = create((set, get) => ({
 
   setAuthResult: (res) => set({ authResult: res }),
 
-  login: async (idToken, name, role) => {
+  login: async (idToken, name, role, otp) => {
     set({ isLoading: true });
     try {
-      const res = await authService.loginWithToken(idToken, name, role);
+      const res = await authService.loginWithToken(idToken, name, role, otp);
       set({ user: res.user, token: res.token, isAuthenticated: true, isLoading: false });
       return res;
     } catch (error) {
@@ -47,6 +47,7 @@ export const useAuthStore = create((set, get) => ({
 
   logout: async () => {
     await authService.logout();
+    await storage.delete('onboarding_done');
     set({ user: null, token: null, isAuthenticated: false });
   },
 }));
@@ -56,4 +57,5 @@ export const forceLogout = () => {
   useAuthStore.setState({ user: null, token: null, isAuthenticated: false });
   storage.delete('token');
   storage.delete('user');
+  storage.delete('onboarding_done');
 };

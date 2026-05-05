@@ -10,5 +10,15 @@ export const messageService = {
     async sendMessage(bookingId, content) {
         const res = await api.post(`/messages/${bookingId}`, { content });
         return res.data;
+    },
+
+    async getConversations() {
+        const { data } = await api.get('/messages');
+        return data;
+    },
+
+    async getUnreadCount() {
+        const { data } = await api.get('/messages/unread-count');
+        return data;
     }
 };

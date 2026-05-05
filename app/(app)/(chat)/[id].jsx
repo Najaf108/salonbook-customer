@@ -96,23 +96,30 @@ export default function ChatScreen() {
                 />
 
                 <View style={styles.inputArea}>
-                    <View style={styles.inputWrapper}>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Type your message..."
-                            value={input}
-                            onChangeText={setInput}
-                            multiline
-                            placeholderTextColor={COLORS.onSurfaceVariant}
-                        />
-                        <TouchableOpacity
-                            style={[styles.sendBtn, !input.trim() && { opacity: 0.5 }]}
-                            onPress={handleSend}
-                            disabled={!input.trim() || isSending}
-                        >
-                            <MaterialIcons name="send" size={24} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
+                    {conversation?.isExpired ? (
+                        <View style={styles.expiredBanner}>
+                            <MaterialIcons name="lock-clock" size={20} color={COLORS.onSurfaceVariant} />
+                            <Text style={styles.expiredText}>Chat has expired for this booking</Text>
+                        </View>
+                    ) : (
+                        <View style={styles.inputWrapper}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Type your message..."
+                                value={input}
+                                onChangeText={setInput}
+                                multiline
+                                placeholderTextColor={COLORS.onSurfaceVariant}
+                            />
+                            <TouchableOpacity
+                                style={[styles.sendBtn, !input.trim() && { opacity: 0.5 }]}
+                                onPress={handleSend}
+                                disabled={!input.trim() || isSending}
+                            >
+                                <MaterialIcons name="send" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -161,5 +168,17 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    expiredBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 4,
+    },
+    expiredText: {
+        fontSize: 14,
+        color: COLORS.onSurfaceVariant,
+        fontWeight: '500',
     }
 });

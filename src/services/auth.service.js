@@ -3,8 +3,13 @@ import api from '../lib/api';
 import storage from '../lib/storage';
 
 export const authService = {
-  async loginWithToken(idToken, name, role) {
-    const res = await api.post('/auth/verify-otp', { idToken, name, role });
+  async requestOTP(email) {
+    const res = await api.post('/auth/request-otp', { email });
+    return res.data;
+  },
+
+  async loginWithToken(idToken, name, role, otp) {
+    const res = await api.post('/auth/verify-otp', { idToken, name, role, otp });
     const { token, user, isNewUser } = res.data;
     await storage.set('token', token);
     await storage.set('user', user);

@@ -23,6 +23,9 @@ export default function BookingDetailScreen() {
     if (isLoading) return <LoadingSpinner full />;
     if (!booking) return null;
 
+    const totalDuration = booking.items?.reduce((sum, item) => sum + item.duration, 0) || 0;
+    const isChatExpired = new Date() > new Date(new Date(booking.scheduledAt).getTime() + (totalDuration + 60) * 60000);
+
     const status = BOOKING_STATUS_LABELS[booking.status] || { bg: '#efdee8', color: '#544245', label: 'Unknown' };
     const canCancel = booking.status === 'PENDING';
     const canReview = booking.status === 'COMPLETED' && !booking.review;
@@ -95,12 +98,14 @@ export default function BookingDetailScreen() {
                                 <Text style={styles.salonName}>{booking.salon?.name}</Text>
                                 <Text style={styles.salonAddr}>{booking.salon?.address}, {booking.salon?.city}</Text>
                             </View>
-                            <TouchableOpacity
-                                style={styles.headerChatBtn}
-                                onPress={() => router.push(`/(app)/(chat)/${booking.id}`)}
-                            >
-                                <MaterialIcons name="chat" size={24} color="#963b52" />
-                            </TouchableOpacity>
+                            {!isChatExpired && (
+                                <TouchableOpacity
+                                    style={styles.headerChatBtn}
+                                    onPress={() => router.push(`/(app)/(chat)/${booking.id}`)}
+                                >
+                                    <MaterialIcons name="chat" size={24} color="#963b52" />
+                                </TouchableOpacity>
+                            )}
                         </View>
 
                         <View style={styles.divider} />

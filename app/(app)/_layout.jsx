@@ -1,4 +1,4 @@
-import { Tabs, router } from 'expo-router';
+import { Tabs, router, Redirect } from 'expo-router';
 import { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -7,13 +7,11 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuthStore();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/(auth)/phone');
-    }
-  }, [isLoading, isAuthenticated]);
-
   if (isLoading) return null;
+
+  if (!isAuthenticated) {
+    return <Redirect href="/" />;
+  }
 
   return (
     <Tabs

@@ -12,11 +12,12 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const login = useAuthStore(s => s.login);
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Error', 'Please fill in all fields');
+            Alert.alert('Error', 'Please enter your email and password');
             return;
         }
 
@@ -25,14 +26,10 @@ export default function LoginScreen() {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const idToken = await userCredential.user.getIdToken();
 
-            // Sync with backend
-            const res = await login(idToken, userCredential.user.displayName || 'Customer', 'CUSTOMER');
+            // Direct login to backend (no OTP required for existing users)
+            await login(idToken, '', 'CUSTOMER');
 
-            if (res.isNewUser) {
-                router.replace('/(auth)/details');
-            } else {
-                router.replace('/(app)/(home)');
-            }
+            router.replace('/(app)/(home)');
         } catch (err) {
             console.error('Login Error:', err);
             let message = 'Login failed. Please check your credentials.';
@@ -75,7 +72,7 @@ export default function LoginScreen() {
 
                     <View style={styles.authCard}>
                         <Text style={styles.welcomeText}>Welcome Back</Text>
-                        <Text style={styles.subtitle}>Sign in to your account</Text>
+                        <Text style={styles.subtitle}>Sign in using your email and password</Text>
 
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Email Address</Text>
@@ -99,12 +96,22 @@ export default function LoginScreen() {
                                 <MaterialIcons name="lock" size={20} color="#963b52" style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="••••••••"
+                                    placeholder="Enter your password"
                                     placeholderTextColor="#9CA3AF"
                                     value={password}
                                     onChangeText={setPassword}
-                                    secureTextEntry
+                                    secureTextEntry={!showPassword}
                                 />
+                                <TouchableOpacity
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    style={styles.eyeIcon}
+                                >
+                                    <MaterialIcons
+                                        name={showPassword ? "visibility" : "visibility-off"}
+                                        size={22}
+                                        color="#9CA3AF"
+                                    />
+                                </TouchableOpacity>
                             </View>
                         </View>
 
@@ -115,7 +122,7 @@ export default function LoginScreen() {
                             activeOpacity={0.8}
                         >
                             <Text style={styles.loginBtnText}>
-                                {loading ? 'Signing in...' : 'Sign In'}
+                                {loading ? 'Logging in...' : 'Sign In'}
                             </Text>
                         </TouchableOpacity>
 
@@ -182,6 +189,7 @@ const styles = StyleSheet.create({
     },
     inputIcon: { marginRight: 12 },
     input: { flex: 1, color: '#111827', fontSize: 16, fontWeight: '500' },
+    eyeIcon: { padding: 8 },
     loginBtn: {
         backgroundColor: '#963b52',
         height: 56,

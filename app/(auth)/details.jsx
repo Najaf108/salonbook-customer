@@ -13,8 +13,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 export default function DetailsScreen() {
     const { user, updateUser } = useAuthStore();
     // Clear default 'Userxxxx' names so the placeholder shows up
-    const initialName = user?.name?.startsWith('User') ? '' : (user?.name || '');
-    const [name, setName] = useState(initialName);
+    const [name, setName] = useState('');
 
     const [phone, setPhone] = useState(user?.phone || '');
     const [age, setAge] = useState(user?.age?.toString() || '');
@@ -76,7 +75,7 @@ export default function DetailsScreen() {
                             <MaterialIcons name="person-outline" size={20} color="#963b52" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder="Enter your full name"
+                                placeholder="enter your full name"
                                 placeholderTextColor="rgba(84, 66, 69, 0.4)"
                                 value={name}
                                 onChangeText={setName}
