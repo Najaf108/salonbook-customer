@@ -225,7 +225,6 @@ const styles = StyleSheet.create({
     },
     decorGradient: { flex: 1 },
 });
-<<<<<<< HEAD
 */
 
 // Placeholder export so the file is valid (route won't be reached)
@@ -237,5 +236,3 @@ export default function OTPScreen() {
         </View>
     );
 }
-=======
->>>>>>> e0c44766a673254190a57634fab594d0a1e8bd3c
