@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "70172727359",
+    "project_id": "salon-app-8c40d",
+    "storage_bucket": "salon-app-8c40d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:70172727359:android:b56946dfad035fe499408a",
+        "android_client_info": {
+          "package_name": "com.salonbook.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "70172727359-ddn3ibthvl39usbo6hshc0l30361e865.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVnuoDAfkTDf295Zx__S4P5NrL9Hzdg-k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "70172727359-ddn3ibthvl39usbo6hshc0l30361e865.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "70172727359-hf9kh6dfhku6fscvo4546kj4j2m3e5r0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.salonbook.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:70172727359:android:888384b9d0c56a9e99408a",
+        "android_client_info": {
+          "package_name": "com.salonbook.customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "70172727359-ddn3ibthvl39usbo6hshc0l30361e865.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVnuoDAfkTDf295Zx__S4P5NrL9Hzdg-k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "70172727359-ddn3ibthvl39usbo6hshc0l30361e865.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "70172727359-hf9kh6dfhku6fscvo4546kj4j2m3e5r0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.salonbook.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
