@@ -1,7 +1,7 @@
 // app/(app)/(home)/checkout.jsx
 import { useState, useEffect } from 'react';
 import {
-    View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert, SafeAreaView, Platform, StatusBar
+    View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert, SafeAreaView, Platform, StatusBar, Linking
 } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { format } from 'date-fns';
@@ -13,8 +13,13 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Image } from 'expo-image';
 import SalonLogo from '@/components/SalonLogo';
 import { dealsService } from '@/services/deals.service';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export default function CheckoutScreen() {
+    const { user } = useAuthStore();
+    const requiresPrepayment = (user?.noShowCount ?? 0) >= 3;
+    const JAZZCASH_NUMBER = '03027168108';
+
     const {
         salon, selectedServices, selectedStaff, selectedDate, selectedTime,
         paymentMethod, notes, setPaymentMethod, setNotes,
@@ -240,31 +245,92 @@ export default function CheckoutScreen() {
                     {/* Payments Block */}
                     <View style={styles.sectionBlock}>
                         <Text style={styles.sectionHeading}>Payment Method</Text>
+
+                        {/* No-Show Prepayment Banner */}
+                        {requiresPrepayment && (
+                            <View style={styles.prepayBanner}>
+                                <View style={styles.prepayBannerHeader}>
+                                    <MaterialIcons name="warning" size={20} color="#fff" />
+                                    <Text style={styles.prepayBannerTitle}>Prepayment Required</Text>
+                                </View>
+                                <Text style={styles.prepayBannerBody}>
+                                    You have {user.noShowCount} no-shows on record. Please send payment via JazzCash before your booking is confirmed.
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.prepayJazzBtn}
+                                    activeOpacity={0.8}
+                                    onPress={() => Linking.openURL(`tel:${JAZZCASH_NUMBER}`)}
+                                >
+                                    <MaterialIcons name="account-balance-wallet" size={18} color="#E8194B" />
+                                    <Text style={styles.prepayJazzBtnText}>📱 JazzCash: {JAZZCASH_NUMBER}</Text>
+                                </TouchableOpacity>
+                                <Text style={styles.prepayNote}>
+                                    Cash on Arrival is disabled for your account.
+                                </Text>
+                            </View>
+                        )}
+
                         <View style={styles.paymentMethodsGrid}>
                             {PAYMENT_METHODS.map(method => {
                                 const isSelected = paymentMethod === method.id;
+                                const isCashBlocked = requiresPrepayment && method.id === 'CASH_ON_ARRIVAL';
+                                const isComingSoon = method.id === 'JAZZCASH' || method.id === 'EASYPAISA';
+
                                 return (
-                                    <TouchableOpacity
-                                        key={method.id}
-                                        style={[styles.paymentCard, isSelected && styles.paymentCardSelected]}
-                                        activeOpacity={0.8}
-                                        onPress={() => setPaymentMethod(method.id)}
-                                    >
-                                        <View style={styles.paymentCardLeft}>
-                                            <View style={[styles.paymentIconBox, isSelected && styles.paymentIconBoxSelected]}>
-                                                <MaterialIcons name={getPaymentIconMap(method.id)} size={24} color={isSelected ? '#963b52' : '#544245'} />
+                                    <View key={method.id} style={{ position: 'relative' }}>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.paymentCard,
+                                                isSelected && styles.paymentCardSelected,
+                                                (isCashBlocked || isComingSoon) && styles.paymentCardDisabled,
+                                            ]}
+                                            activeOpacity={(isCashBlocked || isComingSoon) ? 1 : 0.8}
+                                            onPress={() => {
+                                                if (isComingSoon) {
+                                                    Alert.alert('Coming Soon', 'Online payments will be available in the next update. Please use Cash on Arrival for now.');
+                                                    return;
+                                                }
+                                                if (isCashBlocked) {
+                                                    Alert.alert(
+                                                        'Cash Not Available',
+                                                        `You have ${user.noShowCount} no-shows. Please pay online via JazzCash: ${JAZZCASH_NUMBER}`
+                                                    );
+                                                    return;
+                                                }
+                                                setPaymentMethod(method.id);
+                                            }}
+                                        >
+                                            <View style={styles.paymentCardLeft}>
+                                                <View style={[styles.paymentIconBox, isSelected && styles.paymentIconBoxSelected]}>
+                                                    <MaterialIcons name={getPaymentIconMap(method.id)} size={24} color={isSelected ? '#963b52' : (isCashBlocked || isComingSoon) ? '#b0b0b0' : '#544245'} />
+                                                </View>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={[styles.paymentName, (isCashBlocked || isComingSoon) && styles.paymentNameDisabled]}>{method.label}</Text>
+                                                    <Text style={styles.paymentSub}>{getPaymentSub(method.id)}</Text>
+                                                    {isCashBlocked && (
+                                                        <Text style={styles.paymentBlockedNote}>🚫 Not available for your account</Text>
+                                                    )}
+                                                </View>
                                             </View>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.paymentName}>{method.label}</Text>
-                                                <Text style={styles.paymentSub}>{getPaymentSub(method.id)}</Text>
-                                            </View>
-                                        </View>
-                                        {isSelected && (
-                                            <View style={styles.paymentCheckbox}>
-                                                <MaterialIcons name="check" size={16} color="#ffffff" />
+                                            {isSelected && !isCashBlocked && (
+                                                <View style={styles.paymentCheckbox}>
+                                                    <MaterialIcons name="check" size={16} color="#ffffff" />
+                                                </View>
+                                            )}
+                                            {isCashBlocked && (
+                                                <MaterialIcons name="block" size={22} color="#e53e3e" />
+                                            )}
+                                            {isComingSoon && (
+                                                <MaterialIcons name="schedule" size={22} color="#7b5804" style={{ opacity: 0.5 }} />
+                                            )}
+                                        </TouchableOpacity>
+
+                                        {isComingSoon && (
+                                            <View style={styles.comingSoonBadge}>
+                                                <Text style={styles.comingSoonText}>Available Soon</Text>
                                             </View>
                                         )}
-                                    </TouchableOpacity>
+                                    </View>
                                 );
                             })}
                         </View>
@@ -308,16 +374,39 @@ export default function CheckoutScreen() {
                             </Text>
                         </View>
                         <TouchableOpacity
-                            onPress={handleConfirm}
-                            activeOpacity={0.9}
+                            onPress={() => {
+                                if (requiresPrepayment) {
+                                    Alert.alert(
+                                        'Prepayment Required',
+                                        `You have ${user?.noShowCount} no-shows on record. Please pay online via JazzCash (${JAZZCASH_NUMBER}) before booking.`,
+                                        [{ text: 'OK' }]
+                                    );
+                                    return;
+                                }
+                                handleConfirm();
+                            }}
+                            activeOpacity={requiresPrepayment ? 1 : 0.9}
                             disabled={isPending || isValidatingDeal}
                             style={{ flex: 1, opacity: (isPending || isValidatingDeal) ? 0.7 : 1 }}
                         >
-                            <LinearGradient colors={['#963b52', '#b5536a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.confirmBtn}>
+                            <LinearGradient
+                                colors={requiresPrepayment ? ['#9ca3af', '#6b7280'] : ['#963b52', '#b5536a']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.confirmBtn}
+                            >
+                                {requiresPrepayment
+                                    ? <MaterialIcons name="lock" size={20} color="#fff" />
+                                    : null
+                                }
                                 <Text style={styles.confirmBtnText}>
-                                    {isValidatingDeal ? 'Validating Deal...' : isPending ? 'Processing...' : (paymentMethod === 'CASH_ON_ARRIVAL' ? 'Confirm Booking' : 'Confirm & Pay')}
+                                    {requiresPrepayment
+                                        ? 'Pay Online First'
+                                        : isValidatingDeal ? 'Validating Deal...'
+                                            : isPending ? 'Processing...'
+                                                : (paymentMethod === 'CASH_ON_ARRIVAL' ? 'Confirm Booking' : 'Confirm & Pay')}
                                 </Text>
-                                {!isPending && !isValidatingDeal && <MaterialIcons name="arrow-forward" size={20} color="#fff" />}
+                                {!isPending && !isValidatingDeal && !requiresPrepayment && <MaterialIcons name="arrow-forward" size={20} color="#fff" />}
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
@@ -542,4 +631,88 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
     },
     removeDealText: { fontSize: 13, fontWeight: 'bold', color: '#544245' },
+    // Prepayment banner styles
+    prepayBanner: {
+        backgroundColor: '#7f1d1d',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+        gap: 10,
+        borderWidth: 1,
+        borderColor: '#991b1b',
+    },
+    prepayBannerHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    prepayBannerTitle: {
+        fontSize: 16,
+        fontWeight: '900',
+        color: '#fff',
+        letterSpacing: -0.3,
+    },
+    prepayBannerBody: {
+        fontSize: 13,
+        color: '#fecaca',
+        lineHeight: 20,
+    },
+    prepayJazzBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        alignSelf: 'flex-start',
+    },
+    prepayJazzBtnText: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#E8194B',
+        letterSpacing: 0.3,
+    },
+    prepayNote: {
+        fontSize: 11,
+        color: '#fca5a5',
+        fontStyle: 'italic',
+    },
+    // Disabled payment card
+    paymentCardDisabled: {
+        opacity: 0.5,
+        backgroundColor: '#f3f4f6',
+        borderColor: '#e5e7eb',
+    },
+    paymentNameDisabled: {
+        color: '#9ca3af',
+    },
+    paymentBlockedNote: {
+        fontSize: 11,
+        color: '#e53e3e',
+        fontWeight: '600',
+        marginTop: 2,
+    },
+    comingSoonBadge: {
+        position: 'absolute',
+        top: -6,
+        right: 12,
+        backgroundColor: '#7b5804',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        zIndex: 10,
+        shadowColor: '#7b5804',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    comingSoonText: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
 });
