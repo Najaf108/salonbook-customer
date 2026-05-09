@@ -46,51 +46,28 @@ export default function DealDetailScreen() {
     const daysLeft = deal.daysRemaining ?? 0;
 
     const handleApply = async () => {
-        const serviceIds = getServiceIds();
-        const subtotal = getSubtotal ? getSubtotal() : 0;
-        const hasMidBooking = salon && selectedServices.length > 0;
-
         setApplying(true);
         try {
-            if (hasMidBooking) {
-                // User already has services — validate deal against those services now
-                const result = await applyDealMutation.mutateAsync({
-                    id: deal.id,
-                    serviceIds,
-                    totalAmount: subtotal,
-                });
+            const salonId = deal.salon?.id ?? deal.salonId;
+            const salonData = await salonService.getSalonById(salonId);
 
-                setAppliedDeal({
-                    id: deal.id,
-                    title: deal.title,
-                    dealType: deal.dealType,
-                    discountValue: deal.discountValue,
-                    maxDiscount: deal.maxDiscount,
-                    discountAmount: result.discountAmount,
-                    finalAmount: result.finalAmount,
-                    applicableServices: deal.applicableServices ?? [],
-                });
+            // Replicate "Apply & Book" logic:
+            // 1. Set the salon (this also resets/clears any previous session state)
+            setSalon(salonData);
 
-                router.push('/(app)/(home)/checkout');
-            } else {
-                // No active booking — fetch salon, pre-set it, save deal, go straight to services
-                const salonId = deal.salon?.id ?? deal.salonId;
-                const salonData = await salonService.getSalonById(salonId);
+            // 2. Save the deal to store
+            setAppliedDeal({
+                id: deal.id,
+                title: deal.title,
+                dealType: deal.dealType,
+                discountValue: deal.discountValue,
+                maxDiscount: deal.maxDiscount,
+                discountAmount: null, // Computed at checkout after services are selected
+                applicableServices: deal.applicableServices ?? [],
+            });
 
-                setSalon(salonData);
-                setAppliedDeal({
-                    id: deal.id,
-                    title: deal.title,
-                    dealType: deal.dealType,
-                    discountValue: deal.discountValue,
-                    maxDiscount: deal.maxDiscount,
-                    discountAmount: null,   // computed at checkout after services selected
-                    applicableServices: deal.applicableServices ?? [],
-                });
-
-                // Skip salon detail page — jump directly to service selection
-                router.push('/(app)/(home)/services');
-            }
+            // 3. Send user to service selection
+            router.push('/(app)/(home)/services');
         } catch (err) {
             const msg = err.response?.data?.error || 'Could not apply this deal. Please try again.';
             Alert.alert('Deal Not Applied', msg);
@@ -253,9 +230,7 @@ export default function DealDetailScreen() {
                             <Text style={styles.applyBtnText}>
                                 {applying
                                     ? 'Applying...'
-                                    : (salon && selectedServices.length > 0)
-                                        ? 'Apply & Go to Checkout'
-                                        : 'Book'}
+                                    : 'Apply & Book'}
                             </Text>
                             {!applying && <MaterialIcons name="arrow-forward" size={20} color="#fff" />}
                         </LinearGradient>

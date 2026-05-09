@@ -29,11 +29,18 @@ export default function ChatListScreen() {
             <View style={styles.details}>
                 <View style={styles.header}>
                     <Text style={styles.name} numberOfLines={1}>{item.otherParty}</Text>
-                    <Text style={styles.time}>
-                        {item.lastMessage ? format(new Date(item.lastMessage.createdAt), 'h:mm a') : ''}
-                    </Text>
+                    <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.time}>
+                            {item.lastMessage ? format(new Date(item.lastMessage.createdAt), 'h:mm a') : ''}
+                        </Text>
+                        {item.unreadCount > 0 && (
+                            <View style={styles.unreadBadge}>
+                                <Text style={styles.unreadBadgeText}>{item.unreadCount}</Text>
+                            </View>
+                        )}
+                    </View>
                 </View>
-                <Text style={styles.lastMessage} numberOfLines={1}>
+                <Text style={[styles.lastMessage, item.unreadCount > 0 && styles.lastMessageUnread]} numberOfLines={1}>
                     {item.lastMessage?.content || 'Started a conversation'}
                 </Text>
                 <View style={styles.footer}>
@@ -91,6 +98,22 @@ const styles = StyleSheet.create({
     name: { fontSize: 16, fontWeight: 'bold', color: '#333' },
     time: { fontSize: 12, color: '#999' },
     lastMessage: { fontSize: 14, color: '#666', marginBottom: 2 },
+    lastMessageUnread: { color: '#221920', fontWeight: '700' },
+    unreadBadge: {
+        backgroundColor: '#963b52',
+        paddingHorizontal: 6,
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 4,
+    },
+    unreadBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
     bookingInfo: { fontSize: 11, color: '#999', fontStyle: 'italic' },
     footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
     expiredBadge: {

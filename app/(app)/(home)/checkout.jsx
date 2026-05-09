@@ -31,12 +31,9 @@ export default function CheckoutScreen() {
     const [isNotesFocused, setIsNotesFocused] = useState(false);
     const [isValidatingDeal, setIsValidatingDeal] = useState(false);
 
-    const subtotal = getSubtotal ? getSubtotal() : getTotalPrice();
-    const discount = appliedDeal?.discountAmount ?? 0;
-    const totalPrice = appliedDeal?.discountAmount != null
-        ? Math.max(0, subtotal - appliedDeal.discountAmount)
-        : getTotalPrice();
-
+    const subtotal = getSubtotal();
+    const totalPrice = getTotalPrice();
+    const discount = Math.max(0, subtotal - totalPrice);
     const serviceIds = getServiceIds();
     const serviceIdsKey = serviceIds.join(',');
 
@@ -210,37 +207,39 @@ export default function CheckoutScreen() {
                         </View>
                     </View>
 
-                    {/* Deal Section */}
-                    <View style={styles.sectionBlock}>
-                        <Text style={styles.sectionHeading}>Deal / Discount</Text>
-                        {appliedDeal ? (
-                            <View style={[styles.appliedDealRow, appliedDeal.isInvalid && styles.invalidDealRow]}>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={styles.appliedDealTitle}>🏷️ {appliedDeal.title}</Text>
-                                    {appliedDeal.isInvalid ? (
-                                        <Text style={styles.invalidDealText}>⚠️ {appliedDeal.error || 'Not applicable to this selection'}</Text>
-                                    ) : appliedDeal.discountAmount != null ? (
-                                        <Text style={styles.appliedDealDiscount}>- Rs. {appliedDeal.discountAmount?.toLocaleString()} saved</Text>
-                                    ) : (
-                                        <Text style={styles.appliedDealPending}>⏳ Discount calculated at checkout</Text>
-                                    )}
+                    {/* Deal Section - Only show for regular service bookings, not packages */}
+                    {!packageId && !selectedPackage && (
+                        <View style={styles.sectionBlock}>
+                            <Text style={styles.sectionHeading}>Deal / Discount</Text>
+                            {appliedDeal ? (
+                                <View style={[styles.appliedDealRow, appliedDeal.isInvalid && styles.invalidDealRow]}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.appliedDealTitle}>🏷️ {appliedDeal.title}</Text>
+                                        {appliedDeal.isInvalid ? (
+                                            <Text style={styles.invalidDealText}>⚠️ {appliedDeal.error || 'Not applicable to this selection'}</Text>
+                                        ) : appliedDeal.discountAmount != null ? (
+                                            <Text style={styles.appliedDealDiscount}>- Rs. {appliedDeal.discountAmount?.toLocaleString()} saved</Text>
+                                        ) : (
+                                            <Text style={styles.appliedDealPending}>⏳ Discount calculated at checkout</Text>
+                                        )}
+                                    </View>
+                                    <TouchableOpacity onPress={clearAppliedDeal} activeOpacity={0.8} style={styles.removeDealBtn}>
+                                        <Text style={styles.removeDealText}>Remove</Text>
+                                    </TouchableOpacity>
                                 </View>
-                                <TouchableOpacity onPress={clearAppliedDeal} activeOpacity={0.8} style={styles.removeDealBtn}>
-                                    <Text style={styles.removeDealText}>Remove</Text>
+                            ) : (
+                                <TouchableOpacity
+                                    style={styles.addDealBtn}
+                                    onPress={() => router.push(`/(app)/(home)/deals?salonId=${salon.id}`)}
+                                    activeOpacity={0.8}
+                                >
+                                    <MaterialIcons name="local-offer" size={18} color="#963b52" />
+                                    <Text style={styles.addDealText}>Apply a Deal</Text>
+                                    <MaterialIcons name="chevron-right" size={18} color="#963b52" />
                                 </TouchableOpacity>
-                            </View>
-                        ) : (
-                            <TouchableOpacity
-                                style={styles.addDealBtn}
-                                onPress={() => router.push(`/(app)/(home)/deals?salonId=${salon.id}`)}
-                                activeOpacity={0.8}
-                            >
-                                <MaterialIcons name="local-offer" size={18} color="#963b52" />
-                                <Text style={styles.addDealText}>Apply a Deal</Text>
-                                <MaterialIcons name="chevron-right" size={18} color="#963b52" />
-                            </TouchableOpacity>
-                        )}
-                    </View>
+                            )}
+                        </View>
+                    )}
 
                     {/* Payments Block */}
                     <View style={styles.sectionBlock}>
@@ -274,47 +273,63 @@ export default function CheckoutScreen() {
                             {PAYMENT_METHODS.map(method => {
                                 const isSelected = paymentMethod === method.id;
                                 const isCashBlocked = requiresPrepayment && method.id === 'CASH_ON_ARRIVAL';
+                                const isComingSoon = method.id === 'JAZZCASH' || method.id === 'EASYPAISA';
+
                                 return (
-                                    <TouchableOpacity
-                                        key={method.id}
-                                        style={[
-                                            styles.paymentCard,
-                                            isSelected && styles.paymentCardSelected,
-                                            isCashBlocked && styles.paymentCardDisabled,
-                                        ]}
-                                        activeOpacity={isCashBlocked ? 1 : 0.8}
-                                        onPress={() => {
-                                            if (isCashBlocked) {
-                                                Alert.alert(
-                                                    'Cash Not Available',
-                                                    `You have ${user.noShowCount} no-shows. Please pay online via JazzCash: ${JAZZCASH_NUMBER}`
-                                                );
-                                                return;
-                                            }
-                                            setPaymentMethod(method.id);
-                                        }}
-                                    >
-                                        <View style={styles.paymentCardLeft}>
-                                            <View style={[styles.paymentIconBox, isSelected && styles.paymentIconBoxSelected]}>
-                                                <MaterialIcons name={getPaymentIconMap(method.id)} size={24} color={isSelected ? '#963b52' : isCashBlocked ? '#b0b0b0' : '#544245'} />
+                                    <View key={method.id} style={{ position: 'relative' }}>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.paymentCard,
+                                                isSelected && styles.paymentCardSelected,
+                                                (isCashBlocked || isComingSoon) && styles.paymentCardDisabled,
+                                            ]}
+                                            activeOpacity={(isCashBlocked || isComingSoon) ? 1 : 0.8}
+                                            onPress={() => {
+                                                if (isComingSoon) {
+                                                    Alert.alert('Coming Soon', 'Online payments will be available in the next update. Please use Cash on Arrival for now.');
+                                                    return;
+                                                }
+                                                if (isCashBlocked) {
+                                                    Alert.alert(
+                                                        'Cash Not Available',
+                                                        `You have ${user.noShowCount} no-shows. Please pay online via JazzCash: ${JAZZCASH_NUMBER}`
+                                                    );
+                                                    return;
+                                                }
+                                                setPaymentMethod(method.id);
+                                            }}
+                                        >
+                                            <View style={styles.paymentCardLeft}>
+                                                <View style={[styles.paymentIconBox, isSelected && styles.paymentIconBoxSelected]}>
+                                                    <MaterialIcons name={getPaymentIconMap(method.id)} size={24} color={isSelected ? '#963b52' : (isCashBlocked || isComingSoon) ? '#b0b0b0' : '#544245'} />
+                                                </View>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={[styles.paymentName, (isCashBlocked || isComingSoon) && styles.paymentNameDisabled]}>{method.label}</Text>
+                                                    <Text style={styles.paymentSub}>{getPaymentSub(method.id)}</Text>
+                                                    {isCashBlocked && (
+                                                        <Text style={styles.paymentBlockedNote}>🚫 Not available for your account</Text>
+                                                    )}
+                                                </View>
                                             </View>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={[styles.paymentName, isCashBlocked && styles.paymentNameDisabled]}>{method.label}</Text>
-                                                <Text style={styles.paymentSub}>{getPaymentSub(method.id)}</Text>
-                                                {isCashBlocked && (
-                                                    <Text style={styles.paymentBlockedNote}>🚫 Not available for your account</Text>
-                                                )}
-                                            </View>
-                                        </View>
-                                        {isSelected && !isCashBlocked && (
-                                            <View style={styles.paymentCheckbox}>
-                                                <MaterialIcons name="check" size={16} color="#ffffff" />
+                                            {isSelected && !isCashBlocked && (
+                                                <View style={styles.paymentCheckbox}>
+                                                    <MaterialIcons name="check" size={16} color="#ffffff" />
+                                                </View>
+                                            )}
+                                            {isCashBlocked && (
+                                                <MaterialIcons name="block" size={22} color="#e53e3e" />
+                                            )}
+                                            {isComingSoon && (
+                                                <MaterialIcons name="schedule" size={22} color="#7b5804" style={{ opacity: 0.5 }} />
+                                            )}
+                                        </TouchableOpacity>
+
+                                        {isComingSoon && (
+                                            <View style={styles.comingSoonBadge}>
+                                                <Text style={styles.comingSoonText}>Available Soon</Text>
                                             </View>
                                         )}
-                                        {isCashBlocked && (
-                                            <MaterialIcons name="block" size={22} color="#e53e3e" />
-                                        )}
-                                    </TouchableOpacity>
+                                    </View>
                                 );
                             })}
                         </View>
@@ -676,5 +691,27 @@ const styles = StyleSheet.create({
         color: '#e53e3e',
         fontWeight: '600',
         marginTop: 2,
+    },
+    comingSoonBadge: {
+        position: 'absolute',
+        top: -6,
+        right: 12,
+        backgroundColor: '#7b5804',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        zIndex: 10,
+        shadowColor: '#7b5804',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    comingSoonText: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
 });

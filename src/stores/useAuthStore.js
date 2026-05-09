@@ -12,10 +12,10 @@ export const useAuthStore = create((set, get) => ({
 
   setAuthResult: (res) => set({ authResult: res }),
 
-  login: async (idToken, name, role, otp) => {
+  login: async (idToken, name, role) => {
     set({ isLoading: true });
     try {
-      const res = await authService.loginWithToken(idToken, name, role, otp);
+      const res = await authService.loginWithToken(idToken, name, role);
       set({ user: res.user, token: res.token, isAuthenticated: true, isLoading: false });
       return res;
     } catch (error) {

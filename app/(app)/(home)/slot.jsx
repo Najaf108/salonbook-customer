@@ -11,22 +11,27 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
+const getPKTNow = () => {
+    const d = new Date();
+    return new Date(d.getTime() + (d.getTimezoneOffset() + 300) * 60000);
+};
+
 export default function SlotScreen() {
     const {
         salon, selectedStaff, getTotalDuration, getTotalPrice,
         selectedDate, selectedTime, setDateTime
     } = useBookingStore();
 
-    const [viewDate, setViewDate] = useState(new Date());
+    const [viewDate, setViewDate] = useState(getPKTNow());
     const dateStr = format(viewDate, 'yyyy-MM-dd');
-    const totalPrice = getTotalPrice ? getTotalPrice() : 0; // Fallback gracefully
+    const totalPrice = getTotalPrice ? getTotalPrice() : 0;
 
     const { data: slots, isLoading } = useAvailableSlots(
         salon?.id, dateStr, selectedStaff?.id, getTotalDuration()
     );
 
-    // Generate next 14 days
-    const dates = Array.from({ length: 14 }, (_, i) => addDays(new Date(), i));
+    // Generate next 14 days based on Pakistan current date
+    const dates = Array.from({ length: 14 }, (_, i) => addDays(getPKTNow(), i));
 
     const handleContinue = () => {
         if (!selectedDate || !selectedTime) return;

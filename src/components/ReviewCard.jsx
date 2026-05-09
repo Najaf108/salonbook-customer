@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import StarRating from './StarRating';
 import ReviewPhotoGrid from './ReviewPhotoGrid';
 import { format } from 'date-fns';
@@ -69,14 +70,29 @@ const ReviewCard = ({ review, showSalonName = false, onReport }) => {
                     </View>
                 </View>
                 <View style={styles.headerRight}>
-                    {isAuthor && (
-                        <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
-                            <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                        </TouchableOpacity>
+                    {isAuthor ? (
+                        <View style={styles.authorActions}>
+                            <TouchableOpacity
+                                onPress={() => router.push({
+                                    pathname: '/(app)/(bookings)/review',
+                                    params: {
+                                        reviewId: review.id,
+                                        initialData: JSON.stringify(review)
+                                    }
+                                })}
+                                style={styles.editBtn}
+                            >
+                                <Ionicons name="create-outline" size={18} color="#963b52" />
+                                <Text style={styles.editBtnText}>Edit</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
+                                <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        null
                     )}
-                    <TouchableOpacity onPress={() => onReport?.(review.id)}>
-                        <Ionicons name="ellipsis-horizontal" size={20} color="#666" />
-                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -179,6 +195,25 @@ const styles = StyleSheet.create({
     },
     deleteBtn: {
         padding: 4,
+    },
+    authorActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    editBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF1F2',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 12,
+        gap: 4,
+    },
+    editBtnText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#963b52',
     },
     header: {
         flexDirection: 'row',

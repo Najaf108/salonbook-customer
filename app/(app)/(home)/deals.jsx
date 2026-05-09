@@ -2,15 +2,14 @@
 import { useState, useCallback } from 'react';
 import {
     View, Text, ScrollView, TouchableOpacity,
-    StyleSheet, RefreshControl, SafeAreaView, Platform, StatusBar,
+    StyleSheet, RefreshControl, SafeAreaView, Platform, StatusBar, Alert,
 } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useFeaturedDeals, useSalonDeals } from '@/hooks/useDeals';
+import { useFeaturedDeals, useSalonDeals, useApplyDeal } from '@/hooks/useDeals';
 import DealCard from '@/components/DealCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { useLocalSearchParams } from 'expo-router';
-
+import { useBookingStore } from '@/stores/useBookingStore';
 const FILTERS = [
     { id: 'ALL', label: 'All' },
     { id: 'EXPIRING', label: '⏳ Expiring Soon' },
@@ -25,6 +24,15 @@ export default function DealsScreen() {
     const { salonId } = useLocalSearchParams();
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [refreshing, setRefreshing] = useState(false);
+    const [applyingId, setApplyingId] = useState(null);
+
+    const {
+        salon, selectedServices, getSubtotal, setAppliedDeal, getServiceIds
+    } = useBookingStore();
+    const applyDealMutation = useApplyDeal();
+
+    const subtotal = getSubtotal ? getSubtotal() : 0;
+    const serviceIds = getServiceIds ? getServiceIds() : [];
 
     // Fetch either specific salon deals or featured deals globally
     const featuredQuery = useFeaturedDeals();
@@ -33,6 +41,59 @@ export default function DealsScreen() {
     const { data: deals, isLoading, refetch } = salonId ? salonQuery : featuredQuery;
 
     const headerTitle = salonId ? 'Available Deals' : 'Deals & Offers';
+
+    const handleDealPress = async (deal) => {
+        // 0. Check if already used (per user limit reached)
+        if (deal.isUsed) {
+            Alert.alert('Limit Reached', `You have already used this deal ${deal.perUserLimit} time(s).`);
+            return;
+        }
+
+        // If not in a specific salon booking flow, OR IF THE DEAL IS USED, check before routing
+        if (!salonId || salon?.id !== deal.salonId || deal.isUsed) {
+            if (deal.isUsed) {
+                Alert.alert('Limit Reached', `You have already used this deal ${deal.perUserLimit} time(s).`);
+                return;
+            }
+            router.push(`/(app)/(home)/deal/${deal.id}`);
+            return;
+        }
+
+        // Quick Apply Logic: Try to apply directly if in checkout flow
+        setApplyingId(deal.id);
+        try {
+            const result = await applyDealMutation.mutateAsync({
+                id: deal.id,
+                serviceIds,
+                totalAmount: subtotal,
+            });
+
+            setAppliedDeal({
+                id: deal.id,
+                title: deal.title,
+                dealType: deal.dealType,
+                discountValue: deal.discountValue,
+                maxDiscount: deal.maxDiscount,
+                discountAmount: result.discountAmount,
+                finalAmount: result.finalAmount,
+                applicableServices: deal.applicableServices ?? [],
+            });
+
+            // Success! Go back to checkout
+            router.back();
+        } catch (err) {
+            const errorMsg = err.response?.data?.error || '';
+            // If the error is about usage limits, show an alert and don't go to details
+            if (errorMsg.includes('limit') || errorMsg.includes('use this deal')) {
+                Alert.alert('Deal Unavailable', errorMsg);
+            } else {
+                // For other errors (like needing more services), go to details
+                router.push(`/(app)/(home)/deal/${deal.id}`);
+            }
+        } finally {
+            setApplyingId(null);
+        }
+    };
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -43,7 +104,16 @@ export default function DealsScreen() {
     const filteredDeals = deals?.filter(deal => {
         if (activeFilter === 'ALL') return true;
         if (activeFilter === 'EXPIRING') return deal.isExpiringSoon;
-        return deal.title?.toLowerCase().includes(activeFilter.toLowerCase());
+
+        // 1. Match by category (or if it's a universal deal)
+        const isUniversal = !deal.applicableServices || deal.applicableServices.length === 0;
+        const matchesCategory = isUniversal || deal.applicableCategories?.includes(activeFilter);
+
+        // 2. Match by title (for filters like BRIDAL which might not be a category)
+        const matchesTitle = deal.title?.toLowerCase().includes(activeFilter.toLowerCase()) ||
+            deal.description?.toLowerCase().includes(activeFilter.toLowerCase());
+
+        return matchesCategory || matchesTitle;
     }) ?? [];
 
     return (
@@ -104,7 +174,12 @@ export default function DealsScreen() {
                                 <DealCard
                                     key={deal.id}
                                     deal={deal}
-                                    onPress={() => router.push(`/(app)/(home)/deal/${deal.id}`)}
+                                    onPress={() => handleDealPress(deal)}
+                                    isApplying={applyingId === deal.id}
+                                    isEligible={!!salonId && (
+                                        (!deal.minOrderAmount || subtotal >= deal.minOrderAmount) &&
+                                        (deal.applicableServices?.length === 0 || serviceIds.some(id => deal.applicableServices.includes(id)))
+                                    )}
                                 />
                             ))
                         )}

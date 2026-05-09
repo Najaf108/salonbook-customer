@@ -1,13 +1,14 @@
 // app/(app)/(bookings)/index.jsx
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
     View, Text, ScrollView, TouchableOpacity, FlatList,
-    StyleSheet, Platform, SafeAreaView, StatusBar
+    StyleSheet, Platform, SafeAreaView, StatusBar, RefreshControl,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { format } from 'date-fns';
+import { formatPKT } from '@/lib/date';
 import { useMyBookings } from '@/hooks/useBookings';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import EmptyState from '@/components/EmptyState';
@@ -24,20 +25,20 @@ const TABS = [
 
 export default function BookingsScreen() {
     const [activeTab, setActiveTab] = useState(null);
-    const { data: response, isLoading } = useMyBookings(activeTab);
+    const [refreshing, setRefreshing] = useState(false);
+    const { data: response, isLoading, refetch } = useMyBookings(activeTab);
     const bookings = response?.bookings || [];
 
-    const renderBooking = ({ item }) => {
-        let dateObj;
-        try {
-            dateObj = new Date(item.scheduledAt);
-        } catch (e) {
-            dateObj = new Date();
-        }
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await refetch();
+        setRefreshing(false);
+    };
 
-        const day = format(dateObj, 'dd');
-        const month = format(dateObj, 'MMM');
-        const time = format(dateObj, 'h:mm a');
+    const renderBooking = useCallback(({ item }) => {
+        const day = formatPKT(item.scheduledAt, 'dd');
+        const month = formatPKT(item.scheduledAt, 'MMM');
+        const time = formatPKT(item.scheduledAt, 'h:mm a');
         let statusObj = BOOKING_STATUS_LABELS[item.status] || { label: item.status, bg: '#efdee8', color: '#544245' };
 
         return (
@@ -111,7 +112,7 @@ export default function BookingsScreen() {
                                     activeOpacity={0.8}
                                     onPress={() => {
                                         const services = item.package ? `Package: ${item.package.name}` : (item.items?.map(i => i.service?.name).join(', ') || 'Beauty Services');
-                                        const date = format(new Date(item.scheduledAt), 'MMMM dd, yyyy');
+                                        const date = formatPKT(item.scheduledAt, 'MMMM dd, yyyy');
                                         router.push({
                                             pathname: '/(app)/(bookings)/review',
                                             params: {
@@ -139,7 +140,7 @@ export default function BookingsScreen() {
                 </View>
             </TouchableOpacity>
         );
-    };
+    }, []);
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -194,6 +195,16 @@ export default function BookingsScreen() {
                             keyExtractor={b => b.id}
                             contentContainerStyle={styles.listContent}
                             showsVerticalScrollIndicator={false}
+                            initialNumToRender={5}
+                            maxToRenderPerBatch={10}
+                            windowSize={11}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={onRefresh}
+                                    tintColor="#963b52"
+                                />
+                            }
                             ListEmptyComponent={
                                 <EmptyState
                                     emoji="📅"

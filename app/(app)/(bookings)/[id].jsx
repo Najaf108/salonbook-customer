@@ -7,6 +7,7 @@ import { router, useLocalSearchParams, Stack } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import * as Linking from 'expo-linking';
 import { format } from 'date-fns';
+import { formatPKT } from '@/lib/date';
 import { useBookingDetail, useCancelBooking } from '@/hooks/useBookings';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { BOOKING_STATUS_LABELS } from '@/constants/categories';
@@ -98,7 +99,7 @@ export default function BookingDetailScreen() {
                                 <Text style={styles.salonName}>{booking.salon?.name}</Text>
                                 <Text style={styles.salonAddr}>{booking.salon?.address}, {booking.salon?.city}</Text>
                             </View>
-                            {!isChatExpired && (
+                            {!isChatExpired && !['COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(booking.status) && (
                                 <TouchableOpacity
                                     style={styles.headerChatBtn}
                                     onPress={() => router.push(`/(app)/(chat)/${booking.id}`)}
@@ -115,7 +116,7 @@ export default function BookingDetailScreen() {
                             <View style={styles.iconRow}>
                                 <MaterialIcons name="calendar-month" size={18} color="#963b52" />
                                 <Text style={styles.iconRowText}>
-                                    {format(new Date(booking.scheduledAt), 'EEE, MMM dd • h:mm a')}
+                                    {formatPKT(booking.scheduledAt)}
                                 </Text>
                             </View>
                             <View style={styles.iconRow}>
@@ -223,7 +224,7 @@ export default function BookingDetailScreen() {
                                         staffId: booking.staffId,
                                         staffName: booking.staff?.name,
                                         services: booking.items?.map(i => i.service?.name).join(', '),
-                                        date: format(new Date(booking.scheduledAt), 'MMMM dd, yyyy')
+                                        date: formatPKT(booking.scheduledAt, 'MMMM dd, yyyy')
                                     }
                                 })}
                             >

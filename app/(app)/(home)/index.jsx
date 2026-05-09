@@ -48,10 +48,35 @@ export default function HomeScreen() {
         setRefreshing(false);
     }, [refetchCity, refetchNearby, refetchDeals, refetchPackages]);
 
-    const handleSalonPress = (salon) => {
+    const handleSalonPress = useCallback((salon) => {
         setSalon(salon);
         router.push(`/(app)/(home)/salon/${salon.id}`);
-    };
+    }, [setSalon]);
+
+    const renderSalonItem = useCallback(({ item: salon }) => (
+        <SalonCard
+            salon={salon}
+            style={{ width: 280 }}
+            onPress={() => handleSalonPress(salon)}
+        />
+    ), [handleSalonPress]);
+
+    const renderDealItem = useCallback(({ item: deal }) => (
+        <DealCard
+            deal={deal}
+            horizontal
+            onPress={() => router.push(`/(app)/(home)/deal/${deal.id}`)}
+        />
+    ), []);
+
+    const renderPackageItem = useCallback(({ item: pkg }) => (
+        <View style={{ width: 300 }}>
+            <PackageCard
+                pkg={pkg}
+                onPress={() => router.push(`/(app)/(home)/package/${pkg.id}`)}
+            />
+        </View>
+    ), []);
 
     const greeting = () => {
         const hour = new Date().getHours();
@@ -185,20 +210,16 @@ export default function HomeScreen() {
                                     subtitle="We haven't launched in this city yet!"
                                 />
                             ) : (
-                                <ScrollView
+                                <FlatList
+                                    data={citySalons}
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     contentContainerStyle={styles.salonsScroller}
-                                >
-                                    {citySalons.map(salon => (
-                                        <SalonCard
-                                            key={salon.id}
-                                            salon={salon}
-                                            style={{ width: 280 }}
-                                            onPress={() => handleSalonPress(salon)}
-                                        />
-                                    ))}
-                                </ScrollView>
+                                    keyExtractor={item => item.id}
+                                    renderItem={renderSalonItem}
+                                    initialNumToRender={3}
+                                    windowSize={5}
+                                />
                             )}
                         </View>
 
@@ -212,20 +233,15 @@ export default function HomeScreen() {
                                         <MaterialIcons name="arrow-forward" size={16} color="#963b52" />
                                     </TouchableOpacity>
                                 </View>
-                                <ScrollView
+                                <FlatList
+                                    data={featuredDeals.slice(0, 4)}
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     contentContainerStyle={styles.salonsScroller}
-                                >
-                                    {featuredDeals.slice(0, 4).map(deal => (
-                                        <DealCard
-                                            key={deal.id}
-                                            deal={deal}
-                                            horizontal
-                                            onPress={() => router.push(`/(app)/(home)/deal/${deal.id}`)}
-                                        />
-                                    ))}
-                                </ScrollView>
+                                    keyExtractor={item => item.id}
+                                    renderItem={renderDealItem}
+                                    initialNumToRender={2}
+                                />
                             </View>
                         )}
 
@@ -239,20 +255,15 @@ export default function HomeScreen() {
                                         <MaterialIcons name="arrow-forward" size={16} color="#963b52" />
                                     </TouchableOpacity>
                                 </View>
-                                <ScrollView
+                                <FlatList
+                                    data={featuredPackages.slice(0, 3)}
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     contentContainerStyle={styles.salonsScroller}
-                                >
-                                    {featuredPackages.slice(0, 3).map(pkg => (
-                                        <View key={pkg.id} style={{ width: 300 }}>
-                                            <PackageCard
-                                                pkg={pkg}
-                                                onPress={() => router.push(`/(app)/(home)/package/${pkg.id}`)}
-                                            />
-                                        </View>
-                                    ))}
-                                </ScrollView>
+                                    keyExtractor={item => item.id}
+                                    renderItem={renderPackageItem}
+                                    initialNumToRender={2}
+                                />
                             </View>
                         )}
 
@@ -271,20 +282,16 @@ export default function HomeScreen() {
                                     subtitle="Try another category or area."
                                 />
                             ) : (
-                                <ScrollView
+                                <FlatList
+                                    data={nearbySalons}
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     contentContainerStyle={styles.salonsScroller}
-                                >
-                                    {nearbySalons.map(salon => (
-                                        <SalonCard
-                                            key={salon.id}
-                                            salon={salon}
-                                            style={{ width: 280 }}
-                                            onPress={() => handleSalonPress(salon)}
-                                        />
-                                    ))}
-                                </ScrollView>
+                                    keyExtractor={item => item.id}
+                                    renderItem={renderSalonItem}
+                                    initialNumToRender={3}
+                                    windowSize={5}
+                                />
                             )}
                         </View>
                     </View>

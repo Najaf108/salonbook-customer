@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { COLORS, SIZES } from '../constants/theme';
 import SalonLogo from './SalonLogo';
-
-export default function SalonCard({ salon, onPress, style }) {
+import { MaterialIcons } from '@expo/vector-icons';
+const SalonCard = React.memo(({ salon, onPress, style, isFavorite, onFavoritePress }) => {
   return (
     <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.8}>
       <View style={{ position: 'relative', zIndex: 1 }}>
@@ -22,6 +22,19 @@ export default function SalonCard({ salon, onPress, style }) {
           size={50}
           style={styles.logoOverlay}
         />
+        {onFavoritePress && (
+          <TouchableOpacity
+            style={styles.heartBtn}
+            onPress={onFavoritePress}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons
+              name={isFavorite ? "favorite" : "favorite-border"}
+              size={22}
+              color={isFavorite ? "#ba1a1a" : "#fff"}
+            />
+          </TouchableOpacity>
+        )}
       </View>
       {salon.plan === 'PREMIUM' && (
         <View style={styles.badge}>
@@ -47,7 +60,9 @@ export default function SalonCard({ salon, onPress, style }) {
       </View>
     </TouchableOpacity>
   );
-}
+});
+
+export default SalonCard;
 
 const styles = StyleSheet.create({
   card: {
@@ -96,5 +111,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-  }
+  },
+  heartBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 10,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 20,
+    padding: 6,
+  },
 });

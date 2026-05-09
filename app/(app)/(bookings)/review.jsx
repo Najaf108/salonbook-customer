@@ -7,9 +7,11 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { format } from 'date-fns';
 import StarRating from '../../../src/components/StarRating';
-import { useCreateReview } from '../../../src/hooks/useReviews';
+import { useCreateReview, useUpdateReview } from '../../../src/hooks/useReviews';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
 
 const POSITIVE_TAGS = [
     "Friendly Staff", "Clean Salon", "On Time",
@@ -27,20 +29,35 @@ const NEGATIVE_TAGS = [
 const ReviewScreen = () => {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { bookingId, salonId, salonName, staffId, staffName, services, date } = params;
+    const {
+        bookingId, salonId, salonName: pSalonName, staffId: pStaffId,
+        staffName: pStaffName, services: pServices, date: pDate,
+        reviewId, initialData: pInitialData
+    } = params;
 
-    const [overallRating, setOverallRating] = useState(0);
-    const [staffRating, setStaffRating] = useState(0);
-    const [cleanlinessRating, setCleanlinessRating] = useState(0);
-    const [valueRating, setValueRating] = useState(0);
-    const [title, setTitle] = useState('');
-    const [comment, setComment] = useState('');
-    const [selectedTags, setSelectedTags] = useState([]);
-    const [selectedPhotos, setSelectedPhotos] = useState([]);
-    const [isAnonymous, setIsAnonymous] = useState(false);
-    const [showSubRatings, setShowSubRatings] = useState(false);
+    const initialData = useMemo(() => pInitialData ? JSON.parse(pInitialData) : null, [pInitialData]);
 
-    const { mutate: createReview, isPending } = useCreateReview();
+    const [overallRating, setOverallRating] = useState(initialData?.overallRating || 0);
+    const [staffRating, setStaffRating] = useState(initialData?.staffRating || 0);
+    const [cleanlinessRating, setCleanlinessRating] = useState(initialData?.cleanlinessRating || 0);
+    const [valueRating, setValueRating] = useState(initialData?.valueRating || 0);
+    const [title, setTitle] = useState(initialData?.title || '');
+    const [comment, setComment] = useState(initialData?.comment || '');
+    const [selectedTags, setSelectedTags] = useState(initialData?.tags || []);
+    const [selectedPhotos, setSelectedPhotos] = useState([]); // Existing photos are handled differently usually, but we'll stick to new uploads for now or just skip for edit simplified
+    const [isAnonymous, setIsAnonymous] = useState(initialData?.isAnonymous || false);
+    const [showSubRatings, setShowSubRatings] = useState(!!(initialData?.cleanlinessRating || initialData?.valueRating));
+
+    const salonName = pSalonName || initialData?.salon?.name;
+    const staffId = pStaffId || initialData?.staffId;
+    const staffName = pStaffName || initialData?.staff?.name;
+    const services = pServices || (initialData?.items?.map(i => i.service?.name).join(', '));
+    const date = pDate || (initialData?.createdAt ? format(new Date(initialData.createdAt), 'MMMM dd, yyyy') : '');
+
+    const { mutate: createReview, isPending: isCreating } = useCreateReview();
+    const { mutate: updateReview, isPending: isUpdating } = useUpdateReview();
+    const isPending = isCreating || isUpdating;
+    const isEditing = !!reviewId;
 
     const activeTags = useMemo(() => {
         return overallRating >= 3 ? POSITIVE_TAGS : NEGATIVE_TAGS;
@@ -78,7 +95,7 @@ const ReviewScreen = () => {
         }
 
         const payload = {
-            bookingId,
+            bookingId: bookingId || initialData?.bookingId,
             staffId: staffId || null,
             overallRating,
             staffRating: staffRating || null,
@@ -90,25 +107,29 @@ const ReviewScreen = () => {
             isAnonymous,
         };
 
-        createReview(
-            { data: payload, photos: selectedPhotos },
-            {
-                onSuccess: (data) => {
-                    router.replace({
-                        pathname: '/(app)/(bookings)/review-success',
-                        params: {
-                            rating: overallRating,
-                            salonName,
-                            comment: comment.substring(0, 100),
-                            tags: selectedTags.slice(0, 2).join(',')
-                        }
-                    });
-                },
-                onError: (err) => {
-                    Alert.alert("Error", err.response?.data?.error || "Failed to submit review");
-                }
+        const callbacks = {
+            onSuccess: (data) => {
+                router.replace({
+                    pathname: '/(app)/(bookings)/review-success',
+                    params: {
+                        rating: overallRating,
+                        salonName,
+                        comment: comment.substring(0, 100),
+                        tags: selectedTags.slice(0, 2).join(','),
+                        isEdit: isEditing ? 'true' : 'false'
+                    }
+                });
+            },
+            onError: (err) => {
+                Alert.alert("Error", err.response?.data?.error || "Failed to submit review");
             }
-        );
+        };
+
+        if (isEditing) {
+            updateReview({ id: reviewId, data: payload, photos: selectedPhotos }, callbacks);
+        } else {
+            createReview({ data: payload, photos: selectedPhotos }, callbacks);
+        }
     };
 
     return (
@@ -122,7 +143,7 @@ const ReviewScreen = () => {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <Ionicons name="close" size={28} color="#000" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Write a Review</Text>
+                    <Text style={styles.headerTitle}>{isEditing ? 'Edit Review' : 'Write a Review'}</Text>
                     <View style={{ width: 28 }} />
                 </View>
 
@@ -133,11 +154,11 @@ const ReviewScreen = () => {
                 >
                     {/* Section 1: Salon Info */}
                     <View style={styles.salonCard}>
-                        <Image source={{ uri: 'https://via.placeholder.com/60' }} style={styles.salonPhoto} />
+                        <Image source={{ uri: initialData?.salon?.photos?.[0] || 'https://via.placeholder.com/60' }} style={styles.salonPhoto} />
                         <View style={styles.salonInfo}>
                             <Text style={styles.salonNameText}>{salonName}</Text>
-                            <Text style={styles.servicesText}>{services || 'Haircut, Facial'}</Text>
-                            <Text style={styles.dateText}>{date || 'April 15, 2026'}</Text>
+                            <Text style={styles.servicesText}>{services || 'Standard Service'}</Text>
+                            <Text style={styles.dateText}>{date || 'N/A'}</Text>
                         </View>
                     </View>
 
@@ -310,7 +331,7 @@ const ReviewScreen = () => {
                         {isPending ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.submitBtnText}>Submit Review</Text>
+                            <Text style={styles.submitBtnText}>{isEditing ? 'Update Review' : 'Submit Review'}</Text>
                         )}
                     </TouchableOpacity>
                 </View>

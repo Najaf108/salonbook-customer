@@ -63,17 +63,15 @@ export const useBookingStore = create((set, get) => ({
     packageId: pkg?.id ?? null,
     selectedPackage: pkg ?? null,
     selectedServices: pkg?.items?.map(i => i.service).filter(Boolean) ?? [],
+    appliedDeal: null,
   }),
 
   // Computed helpers
   getTotalPrice: () => {
     const { selectedPackage, selectedServices, appliedDeal } = get();
-
-    if (selectedPackage) {
-      return selectedPackage.packagePrice;
-    }
-
-    const subtotal = selectedServices.reduce((sum, s) => sum + s.price, 0);
+    const subtotal = selectedPackage
+      ? selectedPackage.packagePrice
+      : selectedServices.reduce((sum, s) => sum + s.price, 0);
     const discount = appliedDeal?.discountAmount ?? 0;
     return Math.max(0, subtotal - discount);
   },
@@ -95,7 +93,13 @@ export const useBookingStore = create((set, get) => ({
   getScheduledAt: () => {
     const { selectedDate, selectedTime } = get();
     if (!selectedDate || !selectedTime) return null;
-    return new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const [hour, minute] = selectedTime.split(':').map(Number);
+
+    // Convert Pakistan Local Time to UTC (Subtract 5 hours)
+    const date = new Date(Date.UTC(year, month - 1, day, hour - 5, minute));
+    return date.toISOString();
   },
 
   reset: () => set({

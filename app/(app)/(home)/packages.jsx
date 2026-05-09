@@ -31,8 +31,22 @@ export default function PackagesScreen() {
 
     const filtered = packages?.filter(pkg => {
         if (activeFilter === 'ALL') return true;
-        return pkg.name?.toLowerCase().includes(activeFilter.toLowerCase()) ||
+
+        // 1. Special Case: Combo
+        if (activeFilter === 'COMBO') {
+            return pkg.items?.length > 1;
+        }
+
+        // 2. Match by category in any service item
+        const matchesCategory = pkg.items?.some(item =>
+            item.service?.category === activeFilter
+        );
+
+        // 3. Match by name or description (handles things like BRIDAL)
+        const matchesText = pkg.name?.toLowerCase().includes(activeFilter.toLowerCase()) ||
             pkg.description?.toLowerCase().includes(activeFilter.toLowerCase());
+
+        return matchesCategory || matchesText;
     }) ?? [];
 
     return (

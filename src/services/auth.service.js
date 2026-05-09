@@ -9,8 +9,8 @@ export const authService = {
   //   return res.data;
   // },
 
-  async loginWithToken(idToken, name, role, otp) {
-    const res = await api.post('/auth/verify-otp', { idToken, name, role, otp });
+  async loginWithToken(idToken, name, role) {
+    const res = await api.post('/auth/firebase-sync', { idToken, name, role });
     const { token, user, isNewUser } = res.data;
     await storage.set('token', token);
     await storage.set('user', user);

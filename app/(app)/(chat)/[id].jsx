@@ -48,8 +48,16 @@ export default function ChatScreen() {
 
     const renderMessage = ({ item }) => {
         const isMe = item.senderId === user.id;
+        const salonPhoto = booking?.salon?.logoUrl || `https://ui-avatars.com/api/?name=${booking?.salon?.name || 'Salon'}&background=963b52&color=fff`;
+
         return (
             <View style={[styles.messageWrapper, isMe ? styles.myMessageWrapper : styles.theirMessageWrapper]}>
+                {!isMe && (
+                    <Image
+                        source={{ uri: salonPhoto }}
+                        style={styles.avatar}
+                    />
+                )}
                 <View style={[styles.messageBubble, isMe ? styles.myBubble : styles.theirBubble]}>
                     <Text style={[styles.messageText, isMe ? styles.myMessageText : styles.theirMessageText]}>
                         {item.content}
@@ -74,7 +82,7 @@ export default function ChatScreen() {
         <SafeAreaView style={styles.safeArea}>
             <KeyboardAvoidingView
                 style={styles.container}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
                 <Stack.Screen
@@ -131,10 +139,11 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     listContent: { padding: 16, paddingBottom: 32 },
-    messageWrapper: { flexDirection: 'row', marginBottom: 12, maxWidth: '85%' },
-    myMessageWrapper: { alignSelf: 'flex-end' },
+    messageWrapper: { flexDirection: 'row', marginBottom: 16, maxWidth: '85%' },
+    myMessageWrapper: { alignSelf: 'flex-end', flexDirection: 'row-reverse' },
     theirMessageWrapper: { alignSelf: 'flex-start' },
-    messageBubble: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
+    avatar: { width: 32, height: 32, borderRadius: 16, marginHorizontal: 8, alignSelf: 'flex-end' },
+    messageBubble: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, flexShrink: 1 },
     myBubble: { backgroundColor: COLORS.primary, borderBottomRightRadius: 4 },
     theirBubble: { backgroundColor: COLORS.secondaryContainer, borderBottomLeftRadius: 4 },
     messageText: { fontSize: 15, lineHeight: 20 },

@@ -12,7 +12,9 @@ function formatDuration(minutes) {
     return `${h}h ${m}min`;
 }
 
-export default function PackageCard({ pkg, onPress }) {
+import React from 'react';
+
+const PackageCard = React.memo(({ pkg, onPress }) => {
     const serviceNames = pkg?.items?.map(item => item.service?.name).filter(Boolean) ?? [];
 
     return (
@@ -79,7 +81,9 @@ export default function PackageCard({ pkg, onPress }) {
             </View>
         </TouchableOpacity>
     );
-}
+});
+
+export default PackageCard;
 
 const styles = StyleSheet.create({
     card: {
