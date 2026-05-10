@@ -249,7 +249,7 @@ export default function HomeScreen() {
                         {featuredPackages?.length > 0 && (
                             <View style={[styles.featuredSection, { marginTop: 8 }]}>
                                 <View style={styles.featuredHeader}>
-                                    <Text style={styles.featuredTitle}>📦 Packages</Text>
+                                    <Text style={styles.featuredTitle}>✨ Packages</Text>
                                     <TouchableOpacity onPress={() => router.push('/(app)/(home)/packages')} style={styles.seeAllBtn}>
                                         <Text style={styles.seeAllText}>See All</Text>
                                         <MaterialIcons name="arrow-forward" size={16} color="#963b52" />

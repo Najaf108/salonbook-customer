@@ -87,9 +87,9 @@ export default function SalonDetailScreen() {
                                 color={favoriteData?.favorited ? "#ba1a1a" : "#963b52"}
                             />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.headerBtn} activeOpacity={0.8}>
+                        {/* <TouchableOpacity style={styles.headerBtn} activeOpacity={0.8}>
                             <MaterialIcons name="ios-share" size={24} color="#963b52" />
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                     </View>
                 </View>
 

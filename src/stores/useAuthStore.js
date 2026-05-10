@@ -24,6 +24,18 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  googleLogin: async () => {
+    set({ isLoading: true });
+    try {
+      const res = await authService.googleLogin();
+      set({ user: res.user, token: res.token, isAuthenticated: true, isLoading: false });
+      return res;
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
   // Called on app start to restore session
   init: async () => {
     const token = await storage.get('token');
@@ -47,7 +59,6 @@ export const useAuthStore = create((set, get) => ({
 
   logout: async () => {
     await authService.logout();
-    await storage.delete('onboarding_done');
     set({ user: null, token: null, isAuthenticated: false });
   },
 }));
@@ -57,5 +68,4 @@ export const forceLogout = () => {
   useAuthStore.setState({ user: null, token: null, isAuthenticated: false });
   storage.delete('token');
   storage.delete('user');
-  storage.delete('onboarding_done');
 };

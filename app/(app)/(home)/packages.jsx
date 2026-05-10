@@ -98,7 +98,7 @@ export default function PackagesScreen() {
                     >
                         {filtered.length === 0 ? (
                             <View style={styles.emptyState}>
-                                <Text style={styles.emptyEmoji}>📦</Text>
+                                <Text style={styles.emptyEmoji}>✨</Text>
                                 <Text style={styles.emptyTitle}>No packages available</Text>
                                 <Text style={styles.emptySub}>Salon packages will appear here when created.</Text>
                             </View>

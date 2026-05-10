@@ -1,6 +1,10 @@
 // src/services/auth.service.js
 import api from '../lib/api';
 import storage from '../lib/storage';
+import { GoogleAuthProvider, signInWithCredential, signOut } from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 
 export const authService = {
   // OTP DISABLED: requestOTP is no longer used
@@ -8,6 +12,44 @@ export const authService = {
   //   const res = await api.post('/auth/request-otp', { email });
   //   return res.data;
   // },
+
+  async googleLogin() {
+    try {
+      GoogleSignin.configure({
+        webClientId: '70172727359-ddn3ibthvl39usbo6hshc0l30361e865.apps.googleusercontent.com',
+        offlineAccess: true,
+      });
+
+      if (Platform.OS === 'android') {
+        await GoogleSignin.hasPlayServices({
+          showPlayServicesUpdateDialog: true,
+        });
+      }
+
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.data?.idToken;
+
+      if (!idToken) {
+        throw new Error('No ID token returned from Google');
+      }
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      const firebaseIdToken = await userCredential.user.getIdToken();
+
+      return await this.loginWithToken(
+        firebaseIdToken,
+        userCredential.user.displayName,
+        'CUSTOMER'
+      );
+    } catch (error) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        throw new Error('Google Sign-In was cancelled or failed');
+      }
+      console.error('Google Sign-In Error:', error);
+      throw error;
+    }
+  },
 
   async loginWithToken(idToken, name, role) {
     const res = await api.post('/auth/firebase-sync', { idToken, name, role });
@@ -39,6 +81,17 @@ export const authService = {
   },
 
   async logout() {
+    try {
+      if (Platform.OS !== 'web') {
+        const isSignedIn = await GoogleSignin.isSignedIn();
+        if (isSignedIn) {
+          await GoogleSignin.signOut();
+        }
+      }
+      await signOut(auth);
+    } catch (e) {
+      console.log('Firebase/Google signout error (ignored):', e);
+    }
     await storage.delete('token');
     await storage.delete('user');
   },

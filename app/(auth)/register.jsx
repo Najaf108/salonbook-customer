@@ -144,6 +144,36 @@ export default function RegisterScreen() {
                             </Text>
                         </TouchableOpacity>
 
+                        <View style={styles.divider}>
+                            <View style={styles.dividerLine} />
+                            <Text style={styles.dividerText}>OR</Text>
+                            <View style={styles.dividerLine} />
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.googleBtn}
+                            onPress={async () => {
+                                try {
+                                    const res = await useAuthStore.getState().googleLogin();
+                                    if (res.isNewUser) {
+                                        router.replace('/(auth)/details');
+                                    } else {
+                                        router.replace('/(app)/(home)');
+                                    }
+                                } catch (error) {
+                                    if (error.message !== 'Google Sign-In was cancelled or failed') {
+                                        Alert.alert('Google Sign-In Error', error.message);
+                                    }
+                                }
+                            }}
+                            disabled={loading}
+                        >
+                            <View style={styles.googleIconContainer}>
+                                <Text style={styles.googleIcon}>G</Text>
+                            </View>
+                            <Text style={styles.googleBtnText}>Continue with Google</Text>
+                        </TouchableOpacity>
+
                         <View style={styles.footer}>
                             <Text style={styles.footerText}>Already have an account? </Text>
                             <TouchableOpacity onPress={() => router.push('/login')}>
@@ -225,4 +255,54 @@ const styles = StyleSheet.create({
     footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
     footerText: { color: '#6B7280', fontSize: 14 },
     link: { color: '#963b52', fontWeight: '700', fontSize: 14 },
+    divider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 20,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#E5E7EB',
+    },
+    dividerText: {
+        marginHorizontal: 16,
+        color: '#9CA3AF',
+        fontWeight: '600',
+        fontSize: 12,
+    },
+    googleBtn: {
+        flexDirection: 'row',
+        backgroundColor: '#ffffff',
+        height: 56,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    googleIconContainer: {
+        width: 24,
+        height: 24,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+    },
+    googleIcon: {
+        color: '#4285F4',
+        fontSize: 18,
+        fontWeight: '900',
+    },
+    googleBtnText: {
+        color: '#374151',
+        fontSize: 16,
+        fontWeight: '700',
+    },
 });

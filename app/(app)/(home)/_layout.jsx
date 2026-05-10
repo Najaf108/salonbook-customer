@@ -13,6 +13,10 @@ export default function HomeStackLayout() {
             }}
         >
             <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="salon/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="deal/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="package/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="brand/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="services" options={{ title: 'Services' }} />
             <Stack.Screen name="staff" options={{ title: 'Select Stylist' }} />
             <Stack.Screen name="slot" options={{ title: 'Select Slot' }} />
