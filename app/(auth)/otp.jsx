@@ -1,24 +1,18 @@
-// app/(auth)/otp.jsx
-// ============================================================
-// OTP FUNCTIONALITY DISABLED
-// This screen is no longer used. Registration now goes directly
-// to the details page without OTP verification.
-// ============================================================
-
-/*
 import { useState, useRef, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity,
     StyleSheet, Alert, KeyboardAvoidingView, Platform, SafeAreaView, StatusBar
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { authService } from '@/services/auth.service';
+import { verifyEmailOTP, requestEmailOTP } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/useAuthStore';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function OTPScreen() {
-    const { email, idToken, role } = useLocalSearchParams();
+    const { email, password, role } = useLocalSearchParams();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [resendTimer, setResendTimer] = useState(30);
@@ -47,7 +41,15 @@ export default function OTPScreen() {
     const handleVerify = async (code) => {
         setLoading(true);
         try {
-            const res = await login(idToken, 'New User', role, code);
+            // Step 1: Verify OTP on the backend
+            await verifyEmailOTP(email, code);
+
+            // Step 2: Create Firebase user (since we verified the email now)
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const idToken = await userCredential.user.getIdToken();
+
+            // Step 3: Sync with backend
+            const res = await login(idToken, '', role);
 
             if (res.isNewUser) {
                 router.replace('/(auth)/details');
@@ -56,7 +58,13 @@ export default function OTPScreen() {
             }
         } catch (err) {
             console.error('OTP Verification Error:', err);
-            Alert.alert('Invalid OTP', 'The code you entered is incorrect. Please try again.');
+            let message = 'The code you entered is incorrect. Please try again.';
+            if (err?.response?.data?.error) {
+                message = err.response.data.error;
+            } else if (err.code === 'auth/email-already-in-use') {
+                message = 'This email is already registered in Firebase.';
+            }
+            Alert.alert('Verification Failed', message);
             setOtp(['', '', '', '', '', '']);
             inputs.current[0]?.focus();
         } finally {
@@ -67,7 +75,7 @@ export default function OTPScreen() {
     const handleResend = async () => {
         if (resendTimer > 0) return;
         try {
-            await authService.requestOTP(email);
+            await requestEmailOTP(email);
             setResendTimer(30);
             Alert.alert('OTP Sent', `A new code has been sent to ${email}.`);
         } catch (err) {
@@ -225,14 +233,3 @@ const styles = StyleSheet.create({
     },
     decorGradient: { flex: 1 },
 });
-*/
-
-// Placeholder export so the file is valid (route won't be reached)
-import { View, Text } from 'react-native';
-export default function OTPScreen() {
-    return (
-        <View>
-            <Text>OTP verification is currently disabled.</Text>
-        </View>
-    );
-}

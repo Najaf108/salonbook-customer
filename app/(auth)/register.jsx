@@ -7,8 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-
-// OTP DISABLED: import { authService } from '@/services/auth.service';
+import { requestEmailOTP } from '@/services/auth.service';
 
 export default function RegisterScreen() {
     const [email, setEmail] = useState('');
@@ -30,29 +29,22 @@ export default function RegisterScreen() {
 
         setLoading(true);
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const idToken = await userCredential.user.getIdToken();
+            // Step 1: Request OTP — firebase account created AFTER OTP is verified
+            await requestEmailOTP(email);
 
-            // OTP DISABLED: Skip OTP verification, go directly to details page
-            // await authService.requestOTP(email);
-            // router.push({
-            //     pathname: '/(auth)/otp',
-            //     params: { email, idToken, role: 'CUSTOMER' }
-            // });
-
-            // Login to backend and navigate directly to details (OTP skipped)
-            await login(idToken, '', 'CUSTOMER');
-            router.replace('/(auth)/details');
+            // Navigate to OTP screen with email + password so it can create the account after verify
+            router.push({
+                pathname: '/(auth)/otp',
+                params: { email, password, role: 'CUSTOMER' }
+            });
 
         } catch (err) {
-            console.error('Registration Error:', err);
-            let message = 'Registration failed. Please try again.';
-            if (err.code === 'auth/email-already-in-use') {
-                message = 'This email is already registered.';
-            } else if (err.code === 'auth/invalid-email') {
-                message = 'Invalid email address.';
+            console.error('OTP Request Error:', err);
+            let message = 'Could not send OTP. Please try again.';
+            if (err?.response?.status === 429) {
+                message = 'Too many requests. Please wait a minute and try again.';
             }
-            Alert.alert('Registration Error', message);
+            Alert.alert('Error', message);
         } finally {
             setLoading(false);
         }
@@ -140,7 +132,7 @@ export default function RegisterScreen() {
                             activeOpacity={0.8}
                         >
                             <Text style={styles.registerBtnText}>
-                                {loading ? 'Creating Account...' : 'Create Account'}
+                                {loading ? 'Sending OTP...' : 'Continue'}
                             </Text>
                         </TouchableOpacity>
 
