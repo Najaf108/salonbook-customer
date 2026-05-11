@@ -238,7 +238,11 @@ export default function SearchScreen() {
             <View style={styles.container}>
                 {/* TopAppBar */}
                 <View style={styles.appBar}>
-                    <TouchableOpacity onPress={() => router.back()} activeOpacity={0.8} style={styles.backBtn}>
+                    <TouchableOpacity
+                        onPress={() => router.canGoBack() ? router.back() : router.replace('/(app)/(home)')}
+                        activeOpacity={0.8}
+                        style={styles.backBtn}
+                    >
                         <MaterialIcons name="arrow-back" size={24} color="#963b52" />
                     </TouchableOpacity>
                     <Text style={styles.appTitle}>SalonBook</Text>

@@ -27,8 +27,13 @@ export default function BookingDetailScreen() {
     const totalDuration = booking.items?.reduce((sum, item) => sum + item.duration, 0) || 0;
     const isChatExpired = new Date() > new Date(new Date(booking.scheduledAt).getTime() + (totalDuration + 60) * 60000);
 
+    const bookingTime = new Date(booking.scheduledAt).getTime();
+    const currentTime = new Date().getTime();
+    const oneHourInMs = 60 * 60 * 1000;
+    const isMoreThanOneHourAway = (bookingTime - currentTime) > oneHourInMs;
+
     const status = BOOKING_STATUS_LABELS[booking.status] || { bg: '#efdee8', color: '#544245', label: 'Unknown' };
-    const canCancel = booking.status === 'PENDING';
+    const canCancel = booking.status === 'PENDING' && isMoreThanOneHourAway;
     const canReview = booking.status === 'COMPLETED' && !booking.review;
 
     const handleCancel = () => {
