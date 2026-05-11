@@ -27,6 +27,11 @@
       },
       "package": "com.salonbook.customer",
       "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBu5bVS-T3rrXTrnU4DqqTogXFqFDu56r8"
+        }
+      },
       "softwareKeyboardLayoutMode": "pan",
       "permissions": [
         "ACCESS_FINE_LOCATION",
