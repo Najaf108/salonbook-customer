@@ -2,13 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyB5GDoKIjl0I3Zd62pt4wCvnyZPHCKIUSI",
-  authDomain: "salon-app-8c40d.firebaseapp.com",
-  projectId: "salon-app-8c40d",
-  storageBucket: "salon-app-8c40d.firebasestorage.app",
-  messagingSenderId: "70172727359",
-  appId: "1:70172727359:web:70496908af6a91e999408a",
-  measurementId: "G-PN6B2131HT"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);

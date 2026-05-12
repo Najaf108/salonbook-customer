@@ -1,6 +1,6 @@
 // app/(auth)/phone.jsx
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, SafeAreaView, StatusBar, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -111,12 +111,11 @@ export default function PhoneScreen() {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <View style={styles.logoBadge}>
-                        <LinearGradient
-                            colors={['#963b52', '#b5536a']}
-                            style={styles.logoGradient}
-                        >
-                            <MaterialIcons name="content-cut" size={32} color="#fff" />
-                        </LinearGradient>
+                        <Image
+                            source={require('../../assets/salonbooklogo.png')}
+                            style={styles.logoImage}
+                            resizeMode="cover"
+                        />
                     </View>
                     <Text style={styles.appName}>SalonBook</Text>
                     <Text style={styles.tagline}>Book your next look</Text>
@@ -191,6 +190,7 @@ const styles = StyleSheet.create({
     },
     logoGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     appName: { fontSize: 32, fontWeight: '900', color: '#221920', letterSpacing: -0.5 },
+    logoImage: { width: '100%', height: '100%' },
     tagline: { fontSize: 14, color: '#544245', fontWeight: '500', opacity: 0.7, marginTop: 4 },
     authCard: {
         backgroundColor: '#ffffff',

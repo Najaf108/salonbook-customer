@@ -5,12 +5,12 @@
     "scheme": "salonbook",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/salonbooklogo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/salonbooklogo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#7C3AED"
+      "backgroundColor": "#963b52"
     },
     "ios": {
       "supportsTablet": false,
@@ -22,8 +22,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#7C3AED"
+        "foregroundImage": "./assets/salonbooklogo.png",
+        "backgroundColor": "#963b52"
       },
       "package": "com.salonbook.customer",
       "googleServicesFile": "./google-services.json",
@@ -68,6 +68,7 @@
           "android": {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
+            "minSdkVersion": 26,
             "buildToolsVersion": "35.0.0"
           }
         }

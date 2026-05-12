@@ -4,9 +4,7 @@ import storage from './storage';
 
 // Replace with your laptop's local IP when testing on phone
 // Run "ipconfig" (Windows) or "ifconfig" (Mac) to find it
-const BASE_URL = __DEV__
-  ? 'http://api.salonbook.click/api'
-  : 'http://api.salonbook.click/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.salonbook.click/api';
 
 export const api = axios.create({
   baseURL: BASE_URL,

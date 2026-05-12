@@ -19,7 +19,7 @@ export const verifyEmailOTP = async (email, otp) => {
 export const googleLogin = async () => {
   try {
     GoogleSignin.configure({
-      webClientId: '70172727359-ddn3ibthvl39usbo6hshc0l30361e865.apps.googleusercontent.com',
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
       offlineAccess: true,
     });
 

@@ -15,7 +15,7 @@ export default function OTPScreen() {
     const { email, password, role } = useLocalSearchParams();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
-    const [resendTimer, setResendTimer] = useState(30);
+    const [resendTimer, setResendTimer] = useState(60);
     const login = useAuthStore(s => s.login);
     const inputs = useRef([]);
 
@@ -76,7 +76,7 @@ export default function OTPScreen() {
         if (resendTimer > 0) return;
         try {
             await requestEmailOTP(email);
-            setResendTimer(30);
+            setResendTimer(60);
             Alert.alert('OTP Sent', `A new code has been sent to ${email}.`);
         } catch (err) {
             console.error('Resend Error:', err);
