@@ -49,8 +49,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
-          "color": "#7C3AED"
+          "icon": "./assets/salonbooklogo.png",
+          "color": "#963b52"
         }
       ],
       "expo-asset",
