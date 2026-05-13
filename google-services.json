@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:70172727359:android:b56946dfad035fe499408a",
+        "mobilesdk_app_id": "1:70172727359:android:4534d121e80e4e1699408a",
         "android_client_info": {
-          "package_name": "com.salonbook.app"
+          "package_name": "com.salonbook.app.pakistan"
         }
       },
       "oauth_client": [
@@ -43,12 +43,28 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:70172727359:android:888384b9d0c56a9e99408a",
+        "mobilesdk_app_id": "1:70172727359:android:ef6dae688bf5c72199408a",
         "android_client_info": {
-          "package_name": "com.salonbook.customer"
+          "package_name": "com.salonbook.owner"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "70172727359-1gp2efceibs93j3jv3da1tk43ujb4nc0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salonbook.owner",
+            "certificate_hash": "799bafec926f42e82bb90c620e46a69d3b0f927e"
+          }
+        },
+        {
+          "client_id": "70172727359-37qbih03l9e1t04csnr78sk5hiufu1q3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salonbook.owner",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
         {
           "client_id": "70172727359-ddn3ibthvl39usbo6hshc0l30361e865.apps.googleusercontent.com",
           "client_type": 3
