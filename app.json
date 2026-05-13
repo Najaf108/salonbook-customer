@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.salonbook.customer",
+      "bundleIdentifier": "com.salonbook.app.pakistan",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to find salons near you"
@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/salonbooklogo.png",
         "backgroundColor": "#963b52"
       },
-      "package": "com.salonbook.customer",
+      "package": "com.salonbook.app.pakistan",
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
@@ -58,8 +58,8 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosClientId": "70172727359-smkti5on2qobn08tf65u1ue613pdggto.apps.googleusercontent.com",
-          "iosUrlScheme": "com.googleusercontent.apps.70172727359-smkti5on2qobn08tf65u1ue613pdggto"
+          "iosClientId": "70172727359-98j9ua46507j84kfhg39o39sfvhhcilt.apps.googleusercontent.com",
+          "iosUrlScheme": "com.googleusercontent.apps.70172727359-98j9ua46507j84kfhg39o39sfvhhcilt"
         }
       ],
       [

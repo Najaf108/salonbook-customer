@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>70172727359-smkti5on2qobn08tf65u1ue613pdggto.apps.googleusercontent.com</string>
+	<string>70172727359-98j9ua46507j84kfhg39o39sfvhhcilt.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.70172727359-smkti5on2qobn08tf65u1ue613pdggto</string>
+	<string>com.googleusercontent.apps.70172727359-98j9ua46507j84kfhg39o39sfvhhcilt</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>70172727359-1gp2efceibs93j3jv3da1tk43ujb4nc0.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCrO25PJr6HExAmxYNU-J-B_1Fhq1iI6JI</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.salonbook.customer</string>
+	<string>com.salonbook.app.pakistan</string>
 	<key>PROJECT_ID</key>
 	<string>salon-app-8c40d</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:70172727359:ios:6ed37dd741d8687899408a</string>
+	<string>1:70172727359:ios:1f629218b8471b3199408a</string>
 </dict>
 </plist>
