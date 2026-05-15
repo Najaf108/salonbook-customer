@@ -21,6 +21,7 @@
       }
     },
     "android": {
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/salonbooklogo.png",
         "backgroundColor": "#963b52"
