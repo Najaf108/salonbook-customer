@@ -3,7 +3,16 @@
     "name": "SalonBook",
     "slug": "salonbook",
     "scheme": "salonbook",
-    "version": "1.0.0",
+    "version": "1.0.1",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/5bd8d340-4ce4-4079-8720-9c46a9f2d36f",
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
+    },
     "orientation": "portrait",
     "icon": "./assets/salonbooklogo.png",
     "userInterfaceStyle": "light",
@@ -21,7 +30,7 @@
       }
     },
     "android": {
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/salonbooklogo.png",
         "backgroundColor": "#963b52"
@@ -46,6 +55,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-updates",
       "expo-location",
       [
         "expo-notifications",

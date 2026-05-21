@@ -7,6 +7,7 @@ import {
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFeaturedDeals, useSalonDeals, useApplyDeal } from '@/hooks/useDeals';
+import { useLocation } from '@/hooks/useLocation';
 import DealCard from '@/components/DealCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useBookingStore } from '@/stores/useBookingStore';
@@ -34,8 +35,9 @@ export default function DealsScreen() {
     const subtotal = getSubtotal ? getSubtotal() : 0;
     const serviceIds = getServiceIds ? getServiceIds() : [];
 
+    const { city } = useLocation();
     // Fetch either specific salon deals or featured deals globally
-    const featuredQuery = useFeaturedDeals();
+    const featuredQuery = useFeaturedDeals(city);
     const salonQuery = useSalonDeals(salonId);
 
     const { data: deals, isLoading, refetch } = salonId ? salonQuery : featuredQuery;

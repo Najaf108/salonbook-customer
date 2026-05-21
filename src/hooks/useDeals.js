@@ -2,10 +2,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dealsService } from '../services/deals.service';
 
-export function useFeaturedDeals() {
+export function useFeaturedDeals(city) {
     return useQuery({
-        queryKey: ['deals', 'featured'],
-        queryFn: () => dealsService.getFeaturedDeals(),
+        queryKey: ['deals', 'featured', city],
+        queryFn: () => dealsService.getFeaturedDeals(city),
         staleTime: 5 * 60 * 1000,
     });
 }

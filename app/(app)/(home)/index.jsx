@@ -39,8 +39,8 @@ export default function HomeScreen() {
 
     const { data: citySalons, isLoading: cityLoading, refetch: refetchCity } = useSalonsByCity(city, catFilter);
     const { data: nearbySalons, isLoading: nearbyLoading, refetch: refetchNearby } = useNearbySalons(coords, catFilter ? { category: catFilter } : {});
-    const { data: featuredDeals, refetch: refetchDeals } = useFeaturedDeals();
-    const { data: featuredPackages, refetch: refetchPackages } = useFeaturedPackages();
+    const { data: featuredDeals, refetch: refetchDeals } = useFeaturedDeals(city);
+    const { data: featuredPackages, refetch: refetchPackages } = useFeaturedPackages(city);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);

@@ -2,10 +2,10 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { packagesService } from '../services/packages.service';
 
-export function useFeaturedPackages() {
+export function useFeaturedPackages(city) {
     return useQuery({
-        queryKey: ['packages', 'featured'],
-        queryFn: () => packagesService.getFeaturedPackages(),
+        queryKey: ['packages', 'featured', city],
+        queryFn: () => packagesService.getFeaturedPackages(city),
         staleTime: 5 * 60 * 1000,
     });
 }

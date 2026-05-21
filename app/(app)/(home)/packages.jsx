@@ -7,6 +7,7 @@ import {
 import { router, Stack } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFeaturedPackages } from '@/hooks/usePackages';
+import { useLocation } from '@/hooks/useLocation';
 import PackageCard from '@/components/PackageCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -21,7 +22,8 @@ const FILTERS = [
 export default function PackagesScreen() {
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [refreshing, setRefreshing] = useState(false);
-    const { data: packages, isLoading, refetch } = useFeaturedPackages();
+    const { city } = useLocation();
+    const { data: packages, isLoading, refetch } = useFeaturedPackages(city);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);

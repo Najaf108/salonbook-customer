@@ -2,8 +2,8 @@
 import api from '../lib/api';
 
 export const packagesService = {
-    async getFeaturedPackages() {
-        const res = await api.get('/packages/featured');
+    async getFeaturedPackages(city) {
+        const res = await api.get('/packages/featured', { params: { city } });
         return res.data;
     },
 
