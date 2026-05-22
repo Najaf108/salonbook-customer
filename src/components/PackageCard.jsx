@@ -32,7 +32,7 @@ const PackageCard = React.memo(({ pkg, onPress }) => {
                     />
                 )}
                 {/* Package icon */}
-                {!pkg.photo && <Text style={styles.packageEmoji}>📦</Text>}
+                {/* Removed emoji placeholder */}
                 {/* Savings badge */}
                 <View style={styles.savingsBadge}>
                     <Text style={styles.savingsText}>Save {Math.round(pkg.savingsPercent)}%</Text>
@@ -103,10 +103,6 @@ const styles = StyleSheet.create({
         position: 'relative',
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    packageEmoji: {
-        fontSize: 40,
-        opacity: 0.8,
     },
     savingsBadge: {
         position: 'absolute',

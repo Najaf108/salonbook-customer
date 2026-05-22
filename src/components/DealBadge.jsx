@@ -12,7 +12,6 @@ export default function DealBadge({ deal }) {
 
     return (
         <View style={styles.badge}>
-            <Text style={styles.emoji}>🏷️</Text>
             <Text style={styles.label}>{label}</Text>
         </View>
     );
@@ -29,7 +28,6 @@ const styles = StyleSheet.create({
         gap: 4,
         alignSelf: 'flex-start',
     },
-    emoji: { fontSize: 11 },
     label: {
         fontSize: 11,
         fontWeight: 'bold',

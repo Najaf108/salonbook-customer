@@ -1,5 +1,5 @@
 // app/(app)/(search)/index.jsx
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity,
     ScrollView, FlatList, StyleSheet, ActivityIndicator, Platform, SafeAreaView, StatusBar
@@ -11,9 +11,10 @@ import { useSearchSalons } from '@/hooks/useSalons';
 import { useBookingStore } from '@/stores/useBookingStore';
 import EmptyState from '@/components/EmptyState';
 import SalonCard from '@/components/SalonCard';
+import { useDebounce } from '@/hooks/useDebounce';
 import { CATEGORIES } from '@/constants/categories';
+import { CITIES } from '@/constants/cities';
 
-const CITIES = ['Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar', 'Sargodha'];
 const GENDERS = [
     { id: null, label: 'All Gender' },
     { id: 'MALE', label: 'Men' },
@@ -22,8 +23,151 @@ const GENDERS = [
 ];
 const RATINGS = [4.5, 4.0, 3.5, 3.0];
 
+const SearchHeader = ({
+    query,
+    setQuery,
+    showFilters,
+    handleToggleFilters,
+    tempCity,
+    setTempCity,
+    tempGender,
+    setTempGender,
+    tempCategory,
+    setTempCategory,
+    tempRating,
+    setTempRating,
+    handleApplyFilters,
+    isLoading,
+    salonsCount
+}) => (
+    <>
+        <View style={styles.headerSection}>
+            <Text style={styles.headerTitle}>Explore Salons</Text>
+            <Text style={styles.headerSubtitle}>Find your next beauty destination.</Text>
+        </View>
+
+        <View style={styles.searchBarWrapper}>
+            <MaterialIcons name="search" size={24} color="#877275" style={styles.searchIcon} />
+            <TextInput
+                style={styles.searchInput}
+                placeholder="Search salons, services, stylists..."
+                placeholderTextColor="#544245"
+                value={query}
+                onChangeText={setQuery}
+                returnKeyType="search"
+            />
+            {query ? (
+                <TouchableOpacity style={styles.tuneBtn} onPress={() => setQuery('')}>
+                    <MaterialIcons name="close" size={20} color="#963b52" />
+                </TouchableOpacity>
+            ) : null}
+            <View style={styles.tuneBtnContainer}>
+                <TouchableOpacity
+                    style={[styles.tuneBtnInner, showFilters && styles.tuneBtnActive]}
+                    onPress={handleToggleFilters}
+                >
+                    <MaterialIcons name="tune" size={20} color={showFilters ? "#ffffff" : "#963b52"} />
+                </TouchableOpacity>
+            </View>
+        </View>
+
+        {showFilters && (
+            <View style={styles.filtersContainer}>
+                <Text style={styles.filterGroupTitle}>Select City</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+                    {CITIES.map(city => {
+                        const isActive = tempCity === city;
+                        return (
+                            <TouchableOpacity
+                                key={city}
+                                style={[styles.chip, isActive && styles.chipActive]}
+                                onPress={() => setTempCity(isActive ? null : city)}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{city}</Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+
+                <Text style={styles.filterGroupTitle}>Gender</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+                    {GENDERS.filter(g => g.id !== null).map(g => {
+                        const isActive = tempGender === g.id;
+                        return (
+                            <TouchableOpacity
+                                key={String(g.id)}
+                                style={[styles.chip, isActive && styles.chipActive]}
+                                onPress={() => setTempGender(isActive ? null : g.id)}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{g.label}</Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+
+                <Text style={styles.filterGroupTitle}>Category</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+                    {CATEGORIES.slice(1).map(cat => {
+                        const isActive = tempCategory === cat.id;
+                        return (
+                            <TouchableOpacity
+                                key={cat.id}
+                                style={[styles.chip, isActive && styles.chipActive]}
+                                onPress={() => setTempCategory(isActive ? null : cat.id)}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                                    {cat.label}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+
+                <Text style={styles.filterGroupTitle}>Minimum Rating</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+                    {RATINGS.map(rating => {
+                        const isActive = tempRating === rating;
+                        return (
+                            <TouchableOpacity
+                                key={rating}
+                                style={[styles.chip, isActive && styles.chipActive]}
+                                onPress={() => setTempRating(isActive ? null : rating)}
+                                activeOpacity={0.8}
+                            >
+                                <MaterialIcons
+                                    name="star"
+                                    size={16}
+                                    color={isActive ? "#ffffff" : "#ffb800"}
+                                    style={{ marginRight: 4 }}
+                                />
+                                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                                    {rating}+
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+
+                <TouchableOpacity style={styles.applyBtn} onPress={handleApplyFilters}>
+                    <Text style={styles.applyBtnText}>Apply Filters</Text>
+                </TouchableOpacity>
+            </View>
+        )}
+
+        <View style={styles.resultsHeader}>
+            <Text style={styles.resultsCount}>
+                {isLoading ? 'SEARCHING...' : `${salonsCount} SALON${salonsCount !== 1 ? 'S' : ''} FOUND`}
+            </Text>
+        </View>
+    </>
+);
+
 export default function SearchScreen() {
     const [query, setQuery] = useState('');
+    const debouncedQuery = useDebounce(query, 500);
     const [selectedCity, setSelectedCity] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedGender, setSelectedGender] = useState(null);
@@ -44,18 +188,24 @@ export default function SearchScreen() {
         setShowFilters(false);
     };
 
-    const handleToggleFilters = () => {
+    const handleToggleFilters = useCallback(() => {
         if (!showFilters) {
-            // Opening filters: sync temp state with applied state
             setTempCity(selectedCity);
             setTempCategory(selectedCategory);
             setTempGender(selectedGender);
             setTempRating(selectedRating);
         }
         setShowFilters(!showFilters);
-    };
+    }, [showFilters, selectedCity, selectedCategory, selectedGender, selectedRating]);
 
-    const params = { query, city: selectedCity, category: selectedCategory, gender: selectedGender, minRating: selectedRating };
+    const params = useMemo(() => ({
+        query: debouncedQuery,
+        city: selectedCity,
+        category: selectedCategory,
+        gender: selectedGender,
+        minRating: selectedRating
+    }), [debouncedQuery, selectedCity, selectedCategory, selectedGender, selectedRating]);
+
     const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useSearchSalons(params);
 
     const salons = data?.pages?.flatMap(p => p.salons) ?? [];
@@ -73,132 +223,6 @@ export default function SearchScreen() {
             />
         </View>
     ), [handleSalon]);
-
-    const renderHeader = () => (
-        <>
-            <View style={styles.headerSection}>
-                <Text style={styles.headerTitle}>Explore Salons</Text>
-                <Text style={styles.headerSubtitle}>Find your next beauty destination.</Text>
-            </View>
-
-            <View style={styles.searchBarWrapper}>
-                <MaterialIcons name="search" size={24} color="#877275" style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search salons, services, stylists..."
-                    placeholderTextColor="#544245"
-                    value={query}
-                    onChangeText={setQuery}
-                    returnKeyType="search"
-                />
-                {query ? (
-                    <TouchableOpacity style={styles.tuneBtn} onPress={() => setQuery('')}>
-                        <MaterialIcons name="close" size={20} color="#963b52" />
-                    </TouchableOpacity>
-                ) : null}
-                <View style={styles.tuneBtnContainer}>
-                    <TouchableOpacity
-                        style={[styles.tuneBtnInner, showFilters && styles.tuneBtnActive]}
-                        onPress={handleToggleFilters}
-                    >
-                        <MaterialIcons name="tune" size={20} color={showFilters ? "#ffffff" : "#963b52"} />
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            {showFilters && (
-                <View style={styles.filtersContainer}>
-                    <Text style={styles.filterGroupTitle}>Select City</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-                        {CITIES.map(city => {
-                            const isActive = tempCity === city;
-                            return (
-                                <TouchableOpacity
-                                    key={city}
-                                    style={[styles.chip, isActive && styles.chipActive]}
-                                    onPress={() => setTempCity(isActive ? null : city)}
-                                    activeOpacity={0.8}
-                                >
-                                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{city}</Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
-
-                    <Text style={styles.filterGroupTitle}>Gender</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-                        {GENDERS.filter(g => g.id !== null).map(g => {
-                            const isActive = tempGender === g.id;
-                            return (
-                                <TouchableOpacity
-                                    key={String(g.id)}
-                                    style={[styles.chip, isActive && styles.chipActive]}
-                                    onPress={() => setTempGender(isActive ? null : g.id)}
-                                    activeOpacity={0.8}
-                                >
-                                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{g.label}</Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
-
-                    <Text style={styles.filterGroupTitle}>Category</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-                        {CATEGORIES.slice(1).map(cat => {
-                            const isActive = tempCategory === cat.id;
-                            return (
-                                <TouchableOpacity
-                                    key={cat.id}
-                                    style={[styles.chip, isActive && styles.chipActive]}
-                                    onPress={() => setTempCategory(isActive ? null : cat.id)}
-                                    activeOpacity={0.8}
-                                >
-                                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                                        {cat.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
-
-                    <Text style={styles.filterGroupTitle}>Minimum Rating</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-                        {RATINGS.map(rating => {
-                            const isActive = tempRating === rating;
-                            return (
-                                <TouchableOpacity
-                                    key={rating}
-                                    style={[styles.chip, isActive && styles.chipActive]}
-                                    onPress={() => setTempRating(isActive ? null : rating)}
-                                    activeOpacity={0.8}
-                                >
-                                    <MaterialIcons
-                                        name="star"
-                                        size={16}
-                                        color={isActive ? "#ffffff" : "#ffb800"}
-                                        style={{ marginRight: 4 }}
-                                    />
-                                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                                        {rating}+
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
-
-                    <TouchableOpacity style={styles.applyBtn} onPress={handleApplyFilters}>
-                        <Text style={styles.applyBtnText}>Apply Filters</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-
-            <View style={styles.resultsHeader}>
-                <Text style={styles.resultsCount}>
-                    {isLoading ? 'SEARCHING...' : `${salons.length} SALON${salons.length !== 1 ? 'S' : ''} FOUND`}
-                </Text>
-            </View>
-        </>
-    );
 
     const renderFooter = () => {
         if (isLoading) return <ActivityIndicator size="large" color="#963b52" style={{ marginTop: 40 }} />;
@@ -256,7 +280,25 @@ export default function SearchScreen() {
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.scrollContent}
                     renderItem={renderSalonItem}
-                    ListHeaderComponent={renderHeader}
+                    ListHeaderComponent={
+                        <SearchHeader
+                            query={query}
+                            setQuery={setQuery}
+                            showFilters={showFilters}
+                            handleToggleFilters={handleToggleFilters}
+                            tempCity={tempCity}
+                            setTempCity={setTempCity}
+                            tempGender={tempGender}
+                            setTempGender={setTempGender}
+                            tempCategory={tempCategory}
+                            setTempCategory={setTempCategory}
+                            tempRating={tempRating}
+                            setTempRating={setTempRating}
+                            handleApplyFilters={handleApplyFilters}
+                            isLoading={isLoading}
+                            salonsCount={salons.length}
+                        />
+                    }
                     ListEmptyComponent={renderEmpty}
                     ListFooterComponent={renderFooter}
                     initialNumToRender={5}

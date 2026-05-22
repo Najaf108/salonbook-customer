@@ -7,7 +7,10 @@ import {
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Modal } from 'react-native';
 import { useLocation } from '@/hooks/useLocation';
+import { useLocationStore } from '@/stores/useLocationStore';
+import { CITIES } from '@/constants/cities';
 import { useNearbySalons, useSalonsByCity } from '@/hooks/useSalons';
 import { useFeaturedDeals } from '@/hooks/useDeals';
 import { useFeaturedPackages } from '@/hooks/usePackages';
@@ -26,8 +29,10 @@ import { CATEGORIES } from '@/constants/categories';
 export default function HomeScreen() {
     const { user } = useAuthStore();
     const { location, city, loading: locLoading } = useLocation();
+    const { setCity } = useLocationStore();
     const [selectedCategory, setSelectedCategory] = useState('ALL');
     const [refreshing, setRefreshing] = useState(false);
+    const [showCityModal, setShowCityModal] = useState(false);
     const setSalon = useBookingStore(s => s.setSalon);
 
     const { data: unreadData } = useUnreadCount();
@@ -94,10 +99,14 @@ export default function HomeScreen() {
                         <Text style={styles.appTitle}>SalonBook</Text>
                     </View>
                     <View style={styles.appBarRight}>
-                        <View style={styles.locationBadge}>
+                        <TouchableOpacity
+                            style={styles.locationBadge}
+                            onPress={() => setShowCityModal(true)}
+                            activeOpacity={0.7}
+                        >
                             <MaterialIcons name="location-on" size={14} color="#3f0016" />
                             <Text style={styles.locationText}>{locLoading ? 'Locating...' : city || 'Location'}</Text>
-                        </View>
+                        </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.bellBtn}
                             onPress={() => router.push('/(app)/(profile)/notifications')}
@@ -227,7 +236,7 @@ export default function HomeScreen() {
                         {featuredDeals?.length > 0 && (
                             <View style={[styles.featuredSection, { marginTop: 8 }]}>
                                 <View style={styles.featuredHeader}>
-                                    <Text style={styles.featuredTitle}>🏷️ Deals & Offers</Text>
+                                    <Text style={styles.featuredTitle}>Deals & Offers</Text>
                                     <TouchableOpacity onPress={() => router.push('/(app)/(home)/deals')} style={styles.seeAllBtn}>
                                         <Text style={styles.seeAllText}>See All</Text>
                                         <MaterialIcons name="arrow-forward" size={16} color="#963b52" />
@@ -249,7 +258,7 @@ export default function HomeScreen() {
                         {featuredPackages?.length > 0 && (
                             <View style={[styles.featuredSection, { marginTop: 8 }]}>
                                 <View style={styles.featuredHeader}>
-                                    <Text style={styles.featuredTitle}>✨ Packages</Text>
+                                    <Text style={styles.featuredTitle}>Packages</Text>
                                     <TouchableOpacity onPress={() => router.push('/(app)/(home)/packages')} style={styles.seeAllBtn}>
                                         <Text style={styles.seeAllText}>See All</Text>
                                         <MaterialIcons name="arrow-forward" size={16} color="#963b52" />
@@ -297,6 +306,46 @@ export default function HomeScreen() {
                     </View>
                 </ScrollView>
             </View>
+
+            {/* City Selection Modal */}
+            <Modal
+                visible={showCityModal}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowCityModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Your City</Text>
+                            <TouchableOpacity onPress={() => setShowCityModal(false)}>
+                                <MaterialIcons name="close" size={24} color="#221920" />
+                            </TouchableOpacity>
+                        </View>
+                        <FlatList
+                            data={CITIES}
+                            keyExtractor={item => item}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={[styles.cityItem, city === item && styles.cityItemActive]}
+                                    onPress={() => {
+                                        setCity(item);
+                                        setShowCityModal(false);
+                                    }}
+                                >
+                                    <Text style={[styles.cityItemText, city === item && styles.cityItemTextActive]}>
+                                        {item}
+                                    </Text>
+                                    {city === item && (
+                                        <MaterialIcons name="check-circle" size={20} color="#963b52" />
+                                    )}
+                                </TouchableOpacity>
+                            )}
+                            contentContainerStyle={styles.cityList}
+                        />
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -488,8 +537,55 @@ const styles = StyleSheet.create({
         color: '#963b52',
     },
     salonsScroller: {
-        gap: 24,
+        gap: 20,
         paddingBottom: 16,
         paddingTop: 8,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(34, 25, 32, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#ffffff',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        height: '60%',
+        padding: 24,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#221920',
+    },
+    cityList: {
+        gap: 8,
+    },
+    cityItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        backgroundColor: '#fff7f9',
+    },
+    cityItemActive: {
+        backgroundColor: '#fbe9f3',
+    },
+    cityItemText: {
+        fontSize: 16,
+        color: '#544245',
+        fontWeight: '500',
+    },
+    cityItemTextActive: {
+        color: '#963b52',
+        fontWeight: 'bold',
     },
 });
