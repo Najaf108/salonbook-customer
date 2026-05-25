@@ -3,8 +3,10 @@ import { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useAuthStore } from '@/stores/useAuthStore';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AppLayout() {
+  const insets = useSafeAreaInsets();
   const { isAuthenticated, isLoading } = useAuthStore();
 
   if (isLoading) return null;
@@ -19,7 +21,13 @@ export default function AppLayout() {
         headerShown: false,
         tabBarActiveTintColor: '#963b52',
         tabBarInactiveTintColor: '#797174',
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: (Platform.OS === 'ios' ? 66 : 60) + Math.max(insets.bottom, 10),
+            paddingBottom: Math.max(insets.bottom, 10),
+          }
+        ],
         tabBarLabelStyle: styles.tabLabel,
       }}
     >
@@ -82,8 +90,6 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: '#ffffff',
     borderTopWidth: 0,
-    height: Platform.OS === 'ios' ? 90 : 70,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
     paddingTop: 10,
     shadowColor: '#1a1118',
     shadowOffset: { width: 0, height: -8 },

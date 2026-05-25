@@ -12,6 +12,7 @@ import { auth } from '@/lib/firebase';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import storage from '@/lib/storage';
 import { Alert } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -89,9 +90,11 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
