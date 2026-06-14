@@ -48,19 +48,22 @@ export const usePushNotifications = () => {
             // Learn more about projectId:
             // https://docs.expo.dev/push-notifications/push-notifications-setup/#configure-projectid
             // projectId should be in your app.json/app.config.js
-            const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? 'your-project-id';
+            const projectId =
+                Constants?.expoConfig?.extra?.eas?.projectId ??
+                Constants?.easConfig?.projectId ??
+                '5bd8d340-4ce4-4079-8720-9c46a9f2d36f';
 
             if (!projectId) {
-                console.warn('Project ID not found in expo config');
+                console.warn('Project ID not found in expo config, check app.json');
             }
 
             try {
                 token = (await Notifications.getExpoPushTokenAsync({
                     projectId,
                 })).data;
-                console.log('Expo Push Token:', token);
+                console.log('[Push] Registration Success, Token:', token);
             } catch (e) {
-                console.error('Error getting expo push token', e);
+                console.error('[Push] Error getting expo push token:', e);
             }
         } else {
             console.warn('Must use physical device for Push Notifications');
