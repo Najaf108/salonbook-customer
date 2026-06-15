@@ -265,7 +265,7 @@ export default function HomeScreen() {
                                     </TouchableOpacity>
                                 </View>
                                 <FlatList
-                                    data={featuredPackages.slice(0, 3)}
+                                    data={featuredPackages.slice(0, 7)}
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     contentContainerStyle={styles.salonsScroller}

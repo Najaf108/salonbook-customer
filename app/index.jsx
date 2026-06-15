@@ -37,7 +37,7 @@ export default function SplashScreen() {
         <View style={styles.container}>
             <View style={styles.logoBox}>
                 <Image
-                    source={require('../assets/icon.png')}
+                    source={require('../assets/salonbooklogo.png')}
                     style={styles.logo}
                     resizeMode="contain"
                 />
