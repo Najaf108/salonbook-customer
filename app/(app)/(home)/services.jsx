@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function ServicesScreen() {
     const { salon, selectedServices, toggleService, getTotalPrice, getTotalDuration, appliedDeal } = useBookingStore();
     const [activeCategory, setActiveCategory] = useState('ALL');
+    const [expandedId, setExpandedId] = useState(null);
     const { data: services, isLoading } = useSalonServices(salon?.id);
 
     // If the deal restricts to specific services, filter to only those
@@ -32,29 +33,55 @@ export default function ServicesScreen() {
 
     const renderServiceCard = ({ item, index }) => {
         const isSelected = selectedServices.some(s => s.id === item.id);
+        const isExpanded = expandedId === item.id;
+
         return (
-            <TouchableOpacity
-                style={[styles.serviceCard, isSelected && styles.serviceCardSelected]}
-                onPress={() => toggleService(item)}
-                activeOpacity={0.8}
-            >
-                <View style={styles.serviceLeft}>
-                    <View style={[styles.serviceIconWrap, isSelected && styles.serviceIconWrapSelected]}>
-                        <MaterialIcons
-                            name={index % 3 === 0 ? "face-retouching-natural" : index % 3 === 1 ? "content-cut" : "spa"}
-                            size={28} color={isSelected ? "#ffffff" : "#963b52"}
-                        />
+            <View style={[styles.serviceCardContainer, isSelected && styles.serviceCardSelected]}>
+                <TouchableOpacity
+                    style={styles.serviceCard}
+                    onPress={() => toggleService(item)}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.serviceLeft}>
+                        <View style={[styles.serviceIconWrap, isSelected && styles.serviceIconWrapSelected]}>
+                            <MaterialIcons
+                                name={index % 3 === 0 ? "face-retouching-natural" : index % 3 === 1 ? "content-cut" : "spa"}
+                                size={28} color={isSelected ? "#ffffff" : "#963b52"}
+                            />
+                        </View>
+                        <View style={styles.serviceInfoRow}>
+                            <Text style={[styles.serviceName, isSelected && styles.serviceSelectedText]} numberOfLines={isExpanded ? undefined : 1}>
+                                {item.name}
+                            </Text>
+                            <Text style={styles.serviceDur}>{item.duration} mins</Text>
+
+                            {isExpanded && item.description && (
+                                <Text style={styles.serviceDesc}>{item.description}</Text>
+                            )}
+
+                            <Text style={styles.servicePrice}>PKR {item.price?.toLocaleString()}</Text>
+                        </View>
                     </View>
-                    <View style={styles.serviceInfoRow}>
-                        <Text style={[styles.serviceName, isSelected && styles.serviceSelectedText]} numberOfLines={1}>{item.name}</Text>
-                        <Text style={styles.serviceDur}>{item.duration} mins</Text>
-                        <Text style={styles.servicePrice}>PKR {item.price?.toLocaleString()}</Text>
+
+                    <View style={styles.serviceRight}>
+                        <TouchableOpacity
+                            onPress={() => setExpandedId(isExpanded ? null : item.id)}
+                            style={styles.expandBtn}
+                        >
+                            <MaterialIcons
+                                name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+                                size={24}
+                                color="#963b52"
+                                style={{ opacity: 0.5 }}
+                            />
+                        </TouchableOpacity>
+
+                        <View style={[styles.checkboxOutline, isSelected && styles.checkboxActive]}>
+                            {isSelected && <MaterialIcons name="check" size={16} color="#ffffff" />}
+                        </View>
                     </View>
-                </View>
-                <View style={[styles.checkboxOutline, isSelected && styles.checkboxActive]}>
-                    {isSelected && <MaterialIcons name="check" size={16} color="#ffffff" />}
-                </View>
-            </TouchableOpacity>
+                </TouchableOpacity>
+            </View>
         );
     };
 
@@ -209,13 +236,9 @@ const styles = StyleSheet.create({
         paddingBottom: 140, // Space for floating bottom bar
         gap: 16,
     },
-    serviceCard: {
+    serviceCardContainer: {
         backgroundColor: '#ffffff',
         borderRadius: 16,
-        padding: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
         shadowColor: '#221920',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.03,
@@ -223,6 +246,12 @@ const styles = StyleSheet.create({
         elevation: 1,
         borderWidth: 2,
         borderColor: 'transparent',
+    },
+    serviceCard: {
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     serviceCardSelected: {
         borderColor: '#963b52',
@@ -266,6 +295,19 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: 'bold',
         color: '#963b52',
+    },
+    serviceDesc: {
+        fontSize: 13,
+        color: '#544245',
+        lineHeight: 18,
+        marginVertical: 6,
+    },
+    serviceRight: {
+        alignItems: 'center',
+        gap: 8,
+    },
+    expandBtn: {
+        padding: 4,
     },
     checkboxOutline: {
         width: 28, height: 28,

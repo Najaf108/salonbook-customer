@@ -192,7 +192,14 @@ export default function BookingDetailScreen() {
                                 </View>
                                 <View style={{ flex: 1 }}>
                                     <Text style={styles.paymentMethodText}>{booking.paymentMethod?.replace(/_/g, ' ')}</Text>
-                                    <Text style={styles.paymentStatusText}>Status: <Text style={{ fontWeight: 'bold', color: booking.paymentStatus === 'PAID' ? '#059669' : '#b5536a' }}>{booking.paymentStatus}</Text></Text>
+                                    <Text style={styles.paymentStatusText}>
+                                        Status: <Text style={{
+                                            fontWeight: 'bold',
+                                            color: (booking.paymentStatus === 'PAID' || booking.status === 'COMPLETED') ? '#059669' : '#b5536a'
+                                        }}>
+                                            {(booking.paymentStatus === 'PAID' || booking.status === 'COMPLETED') ? 'PAID' : booking.paymentStatus}
+                                        </Text>
+                                    </Text>
                                 </View>
                                 <View style={styles.totalPriceBlock}>
                                     <Text style={styles.totalSub}>Total</Text>

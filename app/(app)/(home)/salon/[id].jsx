@@ -283,6 +283,8 @@ function InfoTab({ salon, workingToday }) {
 
 function ServicesTab({ services, salonId }) {
     const { data: deals } = useSalonDeals(salonId);
+    const [expandedId, setExpandedId] = useState(null);
+
     if (!services) return <LoadingSpinner />;
 
     // Build a map of serviceId → deal for badge display
@@ -300,8 +302,14 @@ function ServicesTab({ services, salonId }) {
             <View style={styles.servicesGrid}>
                 {services?.map((s, idx) => {
                     const serviceDeal = dealsByServiceId[s.id] || globalDeal;
+                    const isExpanded = expandedId === s.id;
                     return (
-                        <View key={s.id} style={styles.serviceCard}>
+                        <TouchableOpacity
+                            key={s.id}
+                            style={[styles.serviceCard, isExpanded && styles.serviceCardExpanded]}
+                            onPress={() => setExpandedId(isExpanded ? null : s.id)}
+                            activeOpacity={0.8}
+                        >
                             <View style={styles.serviceLeft}>
                                 <View style={styles.serviceIconWrap}>
                                     <MaterialIcons
@@ -310,13 +318,24 @@ function ServicesTab({ services, salonId }) {
                                     />
                                 </View>
                                 <View style={styles.serviceInfoRow}>
-                                    <Text style={styles.serviceName} numberOfLines={1}>{s.name}</Text>
+                                    <Text style={styles.serviceName} numberOfLines={isExpanded ? undefined : 1}>{s.name}</Text>
                                     <Text style={styles.serviceDur}>{s.duration} mins</Text>
+
+                                    {isExpanded && s.description && (
+                                        <Text style={styles.serviceDesc}>{s.description}</Text>
+                                    )}
+
                                     <Text style={styles.servicePrice}>PKR {s.price?.toLocaleString()}</Text>
                                     {serviceDeal && <View style={{ marginTop: 4 }}><DealBadge deal={serviceDeal} /></View>}
                                 </View>
+                                <MaterialIcons
+                                    name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+                                    size={20}
+                                    color="#963b52"
+                                    style={{ opacity: 0.5 }}
+                                />
                             </View>
-                        </View>
+                        </TouchableOpacity>
                     );
                 })}
             </View>
@@ -789,6 +808,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: '#963b52',
+    },
+    serviceDesc: {
+        fontSize: 14,
+        color: '#544245',
+        lineHeight: 20,
+        marginVertical: 8,
+    },
+    serviceCardExpanded: {
+        borderColor: '#963b52',
+        borderWidth: 1,
     },
     addBtn: {
         width: 48, height: 48,
